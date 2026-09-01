@@ -24,7 +24,7 @@ from app.services.storage_engine import (
 from app.services.queue_engine import allocate_optimal_arrival_window
 from app.services.quality_engine import analyze_crop_image, get_simulated_sample_inspection
 
-router = APIRouter(prefix="/api/farmer", tags=["Farmer"])
+router = APIRouter(prefix="/farmer", tags=["Farmer"])
 
 INDIAN_MOBILE_REGEX = r"^[6-9]\d{9}$"
 

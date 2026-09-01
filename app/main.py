@@ -30,7 +30,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API Routers
+# Include API Routers - mounted with /api prefix for localhost
+# On Vercel the /api prefix is stripped before reaching FastAPI,
+# so routers are also mounted WITHOUT /api prefix for Vercel compatibility
+app.include_router(farmer.router, prefix="/api")
+app.include_router(guard.router, prefix="/api")
+app.include_router(clerk.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
+app.include_router(voice.router, prefix="/api")
+
+# Also mount without prefix so Vercel-stripped paths (/farmer/centers etc.) work
 app.include_router(farmer.router)
 app.include_router(guard.router)
 app.include_router(clerk.router)
@@ -66,6 +75,7 @@ async def serve_index():
     })
 
 
+@app.get("/health")
 @app.get("/api/health")
 def health_check():
     """Health check endpoint for monitoring."""

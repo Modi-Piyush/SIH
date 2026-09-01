@@ -15,7 +15,7 @@ from app.services.procurement_engine import validate_weighment_tolerance, calcul
 from app.services.quality_engine import analyze_crop_image, get_simulated_sample_inspection
 from app.services.storage_engine import calculate_s_fill, generate_evacuation_recommendation
 
-router = APIRouter(prefix="/api/clerk", tags=["Clerk & Quality"])
+router = APIRouter(prefix="/clerk", tags=["Clerk & Quality"])
 
 class AcceptAndFulfillRequest(BaseModel):
     token_code: str

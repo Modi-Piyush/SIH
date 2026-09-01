@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from app.database import get_db_connection
 
-router = APIRouter(prefix="/api", tags=["Guard & Sync"])
+router = APIRouter(prefix="/guard", tags=["Guard & Sync"])
 
 class CheckInRequest(BaseModel):
     token_code: str
@@ -30,7 +30,7 @@ class SyncOfflineBatchRequest(BaseModel):
     transactions: List[OfflineTransactionItem]
     device_id: str = "GATE-TAB-01"
 
-@router.get("/guard/verify-token/{token_code}")
+@router.get("/verify-token/{token_code}")
 def verify_token(token_code: str):
     """Verifies a token at the gate and returns farmer, crop, and status info."""
     conn = get_db_connection()
@@ -69,7 +69,7 @@ def verify_token(token_code: str):
         "can_check_in": slot_dict["status"] == "CONFIRMED"
     }
 
-@router.post("/guard/check-in")
+@router.post("/check-in")
 def check_in_farmer(req: CheckInRequest):
     """Performs online gate check-in and transitions booking status to CHECKED_IN."""
     conn = get_db_connection()
@@ -118,7 +118,7 @@ def check_in_farmer(req: CheckInRequest):
         "message": f"Farmer check-in recorded successfully. Token {slot['token_code']} moved to Mandi Queue."
     }
 
-@router.get("/guard/offline-manifest/{center_id}")
+@router.get("/offline-manifest/{center_id}")
 def get_offline_manifest(center_id: int):
     """
     Returns full cacheable list of active bookings for a center.

@@ -195,14 +195,14 @@ class TestProcurementEngines(unittest.TestCase):
         }
 
         # First sync call -> should succeed
-        res1 = self.client.post("/api/sync-offline-transactions", json=payload)
+        res1 = self.client.post("/api/guard/sync-offline-transactions", json=payload)
         self.assertEqual(res1.status_code, 200)
         data1 = res1.json()
         self.assertEqual(data1["synced_count"], 1)
         self.assertEqual(data1["duplicate_count"], 0)
 
         # Second sync call with exact same client_tx_id -> should be recognized as duplicate and skipped
-        res2 = self.client.post("/api/sync-offline-transactions", json=payload)
+        res2 = self.client.post("/api/guard/sync-offline-transactions", json=payload)
         self.assertEqual(res2.status_code, 200)
         data2 = res2.json()
         self.assertEqual(data2["synced_count"], 0)

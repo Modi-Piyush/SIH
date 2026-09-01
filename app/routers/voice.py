@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from app.services.procurement_engine import calculate_crop_weight, is_small_farmer
 from app.routers.farmer import book_slot, BookSlotRequest, register_or_login, FarmerRegisterRequest
 
-router = APIRouter(prefix="/api/voice", tags=["Hindi Voice IVR"])
+router = APIRouter(prefix="/voice", tags=["Hindi Voice IVR"])
 
 class IVRStepRequest(BaseModel):
     session_id: str

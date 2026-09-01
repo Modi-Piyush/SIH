@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from app.database import get_db_connection, seed_demo_data
 from app.services.storage_engine import calculate_s_fill, evaluate_storage_state, find_nearest_available_center
 
-router = APIRouter(prefix="/api/admin", tags=["District Admin & Command Center"])
+router = APIRouter(prefix="/admin", tags=["District Admin & Command Center"])
 
 class DispatchEvacuationRequest(BaseModel):
     trucks_dispatched: int = 3
