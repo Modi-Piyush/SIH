@@ -45,15 +45,28 @@ if not os.path.exists(STATIC_DIR):
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
+@app.get("/index.html")
 async def serve_index():
     """Serves the main Single Page Application index.html."""
-    index_file = os.path.join(STATIC_DIR, "index.html")
-    if os.path.exists(index_file):
-        return FileResponse(index_file)
+    candidate_paths = [
+        os.path.join(STATIC_DIR, "index.html"),
+        os.path.join(os.path.dirname(STATIC_DIR), "index.html"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "index.html"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "index.html"),
+        os.path.join(os.getcwd(), "static", "index.html"),
+        os.path.join(os.getcwd(), "index.html"),
+        "/var/task/static/index.html",
+        "/var/task/index.html"
+    ]
+    for p in candidate_paths:
+        if os.path.exists(p):
+            return FileResponse(p, media_type="text/html")
+            
     return JSONResponse({
-        "message": "Farmer Procurement Platform API is active. Static files will be served once built.",
+        "message": "Farmer Procurement Platform API is active.",
         "api_docs": "/docs"
     })
+
 
 @app.get("/api/health")
 def health_check():
