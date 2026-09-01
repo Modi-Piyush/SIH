@@ -37,12 +37,10 @@ app.include_router(clerk.router)
 app.include_router(admin.router)
 app.include_router(voice.router)
 
-# Mount Static Assets Directory
+# Mount Static Assets Directory (safely without crashing on read-only serverless filesystem)
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
-if not os.path.exists(STATIC_DIR):
-    os.makedirs(STATIC_DIR, exist_ok=True)
-
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+if os.path.exists(STATIC_DIR) and os.path.isdir(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 @app.get("/index.html")
