@@ -69,7 +69,7 @@ def analyze_crop_image(image_bytes: bytes, crop_name: str = "Wheat") -> Dict[str
         grade_label = "Grade A (Prime Quality)"
         outcome = "Excellent — ready for immediate procurement. Moisture within safe threshold (<14.5%)."
         confidence = 0.94
-        recommendation = "Proceed to PACS Center for weighment."
+        recommendation = "Proceed to Mandi for weighment."
     elif moisture_pct <= MOISTURE_GRADE_B_THRESHOLD:
         ai_grade = "B"
         grade_label = "Grade B (Fair Quality)"
@@ -81,11 +81,11 @@ def analyze_crop_image(image_bytes: bytes, crop_name: str = "Wheat") -> Dict[str
         grade_label = "Rejected (High Moisture Risk)"
         outcome = "High moisture (>16.5%) — significant fungal / spoilage risk during godown storage. Moisture must be reduced before procurement."
         confidence = 0.96
-        recommendation = "Do NOT travel to PACS Center today. Dry grain under direct sunlight for 2-3 days until moisture drops below 14.5%."
+        recommendation = "Do NOT travel to Mandi today. Dry grain under direct sunlight for 2-3 days until moisture drops below 14.5%."
 
     return {
         "is_preliminary_assessment": True,
-        "disclaimer": "AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and physical inspection happen at PACS Center.",
+        "disclaimer": "AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and physical inspection happen at Mandi.",
         "crop_name": crop_name,
         "moisture_percentage": moisture_pct,
         "discoloration_percentage": discoloration_pct,
@@ -112,7 +112,7 @@ def get_simulated_sample_inspection(sample_type: str = "dry_wheat", crop_name: s
     if sample_type == "dry_wheat":
         return {
             "is_preliminary_assessment": True,
-            "disclaimer": "AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and physical inspection happen at PACS Center.",
+            "disclaimer": "AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and physical inspection happen at Mandi.",
             "crop_name": crop_name,
             "moisture_percentage": 12.4,
             "discoloration_percentage": 0.8,
@@ -121,7 +121,7 @@ def get_simulated_sample_inspection(sample_type: str = "dry_wheat", crop_name: s
             "ai_grade": "A",
             "grade_label": "Grade A (Prime Quality)",
             "outcome": "Excellent — ready for immediate procurement. Moisture within safe threshold (<14.5%).",
-            "recommendation": "Proceed to PACS Center for weighment.",
+            "recommendation": "Proceed to Mandi for weighment.",
             "confidence": 0.96,
             "metrics_summary": {
                 "moisture": "12.4% (Max allowed: 14.5%)",
@@ -133,7 +133,7 @@ def get_simulated_sample_inspection(sample_type: str = "dry_wheat", crop_name: s
     elif sample_type == "medium_moist":
         return {
             "is_preliminary_assessment": True,
-            "disclaimer": "AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and physical inspection happen at PACS Center.",
+            "disclaimer": "AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and physical inspection happen at Mandi.",
             "crop_name": crop_name,
             "moisture_percentage": 15.2,
             "discoloration_percentage": 2.1,
@@ -154,7 +154,7 @@ def get_simulated_sample_inspection(sample_type: str = "dry_wheat", crop_name: s
     else:  # wet_grain
         return {
             "is_preliminary_assessment": True,
-            "disclaimer": "AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and physical inspection happen at PACS Center.",
+            "disclaimer": "AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and physical inspection happen at Mandi.",
             "crop_name": crop_name,
             "moisture_percentage": 18.6,
             "discoloration_percentage": 5.4,
@@ -163,7 +163,7 @@ def get_simulated_sample_inspection(sample_type: str = "dry_wheat", crop_name: s
             "ai_grade": "REJECTED",
             "grade_label": "Rejected (High Moisture Risk)",
             "outcome": "High moisture (>16.5%) — significant fungal / spoilage risk during godown storage. Moisture must be reduced before procurement.",
-            "recommendation": "Do NOT travel to PACS Center today. Dry grain under direct sunlight for 2-3 days until moisture drops below 14.5%.",
+            "recommendation": "Do NOT travel to Mandi today. Dry grain under direct sunlight for 2-3 days until moisture drops below 14.5%.",
             "confidence": 0.98,
             "metrics_summary": {
                 "moisture": "18.6% (Max allowed: 14.5%)",
