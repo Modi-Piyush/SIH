@@ -271,5 +271,41 @@ class TestProcurementEngines(unittest.TestCase):
         self.assertGreater(metrics.json()["total_procured_q"], 0)
         self.assertGreater(metrics.json()["total_payout_inr"], 0)
 
+    # 9. Test Exact Weight Mode in Calculation and Booking
+    def test_exact_weight_mode(self):
+        # Calculation with EXACT mode
+        calc_res = self.client.post("/api/farmer/calculate-weight", json={
+            "crop_name": "Wheat",
+            "land_acres": 4.0,
+            "mode": "EXACT",
+            "exact_weight_q": 35.5
+        })
+        self.assertEqual(calc_res.status_code, 200)
+        calc_data = calc_res.json()
+        self.assertEqual(calc_data["total_weight_q"], 35.5)
+        self.assertEqual(calc_data["estimated_weight_q"], 72.0) # 4 * 18
+
+        # Ensure farmer is registered
+        self.client.post("/api/farmer/register-or-login", json={
+            "phone": "9812345679",
+            "name": "Exact Kisan",
+            "village": "Rampur",
+            "land_acres": 4.0
+        })
+
+        # Booking with EXACT mode
+        book_res = self.client.post("/api/farmer/book-slot", json={
+            "phone": "9812345679",
+            "center_id": 1,
+            "crop_name": "Wheat",
+            "land_acres": 4.0,
+            "weight_input_mode": "EXACT",
+            "requested_weight_q": 35.5
+        })
+        self.assertEqual(book_res.status_code, 200)
+        book_data = book_res.json()
+        self.assertEqual(book_data["total_weight_q"], 35.5)
+
 if __name__ == "__main__":
     unittest.main()
+

@@ -170,8 +170,8 @@
               </div>
             </div>
 
-            <!-- Vehicle / Tractor Number -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+            <!-- Vehicle / Tractor Number & Weight Estimation Mode -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
               <div>
                 <label class="form-label" data-i18n="lbl_tractor">Tractor / Vehicle Number</label>
                 <input type="text" id="book-tractor" class="form-input" placeholder="e.g. UP-65-AB-1234" value="UP-65-AB-1234">
@@ -182,6 +182,10 @@
                   <option value="ESTIMATE">Land Multiplier Formula (Acres × Crop Q/Acre)</option>
                   <option value="EXACT">Exact Weight (Quintals)</option>
                 </select>
+              </div>
+              <div id="exact-weight-container" style="display: none;">
+                <label class="form-label" data-i18n="lbl_exact_weight">Exact Weight (Quintals)</label>
+                <input type="number" step="0.1" min="0.1" id="book-exact-weight" class="form-input" placeholder="e.g. 50.0" value="50.0">
               </div>
             </div>
 

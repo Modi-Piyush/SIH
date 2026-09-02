@@ -60,6 +60,7 @@ const i18n = {
     lbl_select_center: 'Select Procurement Center (PACS Godown)',
     lbl_tractor: 'Tractor / Vehicle Number',
     lbl_weight_mode: 'Weight Estimation Mode',
+    lbl_exact_weight: 'Exact Weight (Quintals)',
     btn_confirm_booking: 'Confirm Booking & Generate Digital Token',
     track_title: 'Live Digital Token Tracker',
     track_subtitle: 'Real-time gate check-in, AI quality status, weighbridge report, and instant payment dispatch.',
@@ -89,6 +90,7 @@ const i18n = {
     lbl_select_center: 'क्रय केंद्र (पैक्स गोदाम) चुनें',
     lbl_tractor: 'ट्रैक्टर / वाहन संख्या',
     lbl_weight_mode: 'वजन गणना विधि',
+    lbl_exact_weight: 'वास्तविक वजन (क्विंटल में)',
     btn_confirm_booking: 'बुकिंग की पुष्टि करें व डिजिटल टोकन प्राप्त करें',
     track_title: 'डिजिटल टोकन लाइव ट्रैकर',
     track_subtitle: 'गेट चेक-इन, एआई गुणवत्ता परीक्षण, धर्मकांटा रिपोर्ट एवं प्रत्यक्ष बैंक हस्तांतरण (DBT)।',
@@ -264,32 +266,48 @@ function renderCropSelector() {
 
 async function updateYieldCalculation() {
   const landInput = document.getElementById('book-land');
-  const acres = parseFloat(landInput.value) || 3.5;
+  const acres = parseFloat(landInput?.value) || 3.5;
   const isSmall = acres <= 5.0;
 
   // Update Equity badge
   const eqBadge = document.getElementById('farmer-equity-badge');
-  if (isSmall) {
-    eqBadge.className = 'badge badge-safe';
-    eqBadge.innerText = `Small Farmer (${acres} Ac ≤ 5 Ac) - Guaranteed 40% Center Quota`;
-  } else {
-    eqBadge.className = 'badge badge-warning';
-    eqBadge.innerText = `Large Farmer (${acres} Ac > 5 Ac) - 50Q Daily Capping Applied`;
+  if (eqBadge) {
+    if (isSmall) {
+      eqBadge.className = 'badge badge-safe';
+      eqBadge.innerText = `Small Farmer (${acres} Ac ≤ 5 Ac) - Guaranteed 40% Center Quota`;
+    } else {
+      eqBadge.className = 'badge badge-warning';
+      eqBadge.innerText = `Large Farmer (${acres} Ac > 5 Ac) - 50Q Daily Capping Applied`;
+    }
+  }
+
+  const weightMode = document.getElementById('book-weight-mode')?.value || 'ESTIMATE';
+  const exactWeightInput = document.getElementById('book-exact-weight');
+  const exactWeight = parseFloat(exactWeightInput?.value) || 0;
+
+  const reqBody = {
+    crop_name: state.selectedCrop,
+    land_acres: acres,
+    mode: weightMode
+  };
+
+  if (weightMode === 'EXACT' && exactWeight > 0) {
+    reqBody.exact_weight_q = exactWeight;
   }
 
   try {
     const res = await fetch('/api/farmer/calculate-weight', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        crop_name: state.selectedCrop,
-        land_acres: acres,
-        mode: 'ESTIMATE'
-      })
+      body: JSON.stringify(reqBody)
     });
     const data = await res.json();
 
-    document.getElementById('yield-preview-text').innerText = `${data.total_weight_q} Quintals (${data.crop_name} @ ${data.multiplier_q_per_acre} Q/Acre)`;
+    const previewSubtitle = weightMode === 'EXACT'
+      ? `Exact Specified`
+      : `@ ${data.multiplier_q_per_acre} Q/Acre`;
+
+    document.getElementById('yield-preview-text').innerText = `${data.total_weight_q} Quintals (${data.crop_name} ${previewSubtitle})`;
     document.getElementById('yield-msp-text').innerText = `Estimated Gross MSP Value: ₹${data.estimated_gross_payout.toLocaleString('en-IN')} (Rate: ₹${data.msp_rate_per_q}/Q)`;
 
     const timeline = document.getElementById('tranche-timeline-container');
@@ -412,6 +430,38 @@ function setupBookingForm() {
   const form = document.getElementById('slot-booking-form');
   if (!form) return;
 
+  const landInput = document.getElementById('book-land');
+  const weightModeSelect = document.getElementById('book-weight-mode');
+  const exactWeightInput = document.getElementById('book-exact-weight');
+  const exactWeightContainer = document.getElementById('exact-weight-container');
+
+  function handleWeightModeChange() {
+    if (weightModeSelect && weightModeSelect.value === 'EXACT') {
+      if (exactWeightContainer) exactWeightContainer.style.display = 'block';
+      if (exactWeightInput && (!exactWeightInput.value || parseFloat(exactWeightInput.value) <= 0)) {
+        const cropObj = state.crops.find((c) => c.name === state.selectedCrop);
+        const multiplier = cropObj ? cropObj.multiplier : 18;
+        const acres = parseFloat(landInput?.value) || 3.5;
+        exactWeightInput.value = (acres * multiplier).toFixed(1);
+      }
+    } else {
+      if (exactWeightContainer) exactWeightContainer.style.display = 'none';
+    }
+    updateYieldCalculation();
+  }
+
+  if (landInput) {
+    landInput.addEventListener('input', updateYieldCalculation);
+  }
+
+  if (weightModeSelect) {
+    weightModeSelect.addEventListener('change', handleWeightModeChange);
+  }
+
+  if (exactWeightInput) {
+    exactWeightInput.addEventListener('input', updateYieldCalculation);
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -421,6 +471,7 @@ function setupBookingForm() {
     const land = parseFloat(document.getElementById('book-land').value);
     const tractor = document.getElementById('book-tractor').value.trim();
     const weightMode = document.getElementById('book-weight-mode').value;
+    const exactWeight = parseFloat(document.getElementById('book-exact-weight')?.value) || null;
 
     const btn = document.getElementById('btn-submit-booking');
     btn.disabled = true;
@@ -434,18 +485,24 @@ function setupBookingForm() {
         body: JSON.stringify({ phone, name, village, land_acres: land })
       });
 
+      const bookingPayload = {
+        phone,
+        center_id: state.selectedCenterId,
+        crop_name: state.selectedCrop,
+        land_acres: land,
+        tractor_number: tractor,
+        weight_input_mode: weightMode
+      };
+
+      if (weightMode === 'EXACT' && exactWeight && exactWeight > 0) {
+        bookingPayload.requested_weight_q = exactWeight;
+      }
+
       // 2. Book Slot
       const res = await fetch('/api/farmer/book-slot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone,
-          center_id: state.selectedCenterId,
-          crop_name: state.selectedCrop,
-          land_acres: land,
-          tractor_number: tractor,
-          weight_input_mode: weightMode
-        })
+        body: JSON.stringify(bookingPayload)
       });
 
       const data = await res.json();
