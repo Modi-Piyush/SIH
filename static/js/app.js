@@ -59,8 +59,10 @@ const i18n = {
     lbl_yield_estimate: 'Yield Estimation & Capping',
     lbl_select_center: 'Select Procurement Center (PACS Godown)',
     lbl_tractor: 'Tractor / Vehicle Number',
-    lbl_weight_mode: 'Weight Estimation Mode',
-    lbl_exact_weight: 'Exact Weight (Quintals)',
+    lbl_weight_mode: 'Quantity Input Method',
+    opt_mode_land: 'Landholding Area (Acres)',
+    opt_mode_exact: 'Exact Crop Weight (Quintals)',
+    lbl_exact_weight: 'Exact Crop Weight (Quintals)',
     btn_confirm_booking: 'Confirm Booking & Generate Digital Token',
     track_title: 'Live Digital Token Tracker',
     track_subtitle: 'Real-time gate check-in, AI quality status, weighbridge report, and instant payment dispatch.',
@@ -89,8 +91,10 @@ const i18n = {
     lbl_yield_estimate: 'उपज अनुमान एवं कोटा सीमा',
     lbl_select_center: 'क्रय केंद्र (पैक्स गोदाम) चुनें',
     lbl_tractor: 'ट्रैक्टर / वाहन संख्या',
-    lbl_weight_mode: 'वजन गणना विधि',
-    lbl_exact_weight: 'वास्तविक वजन (क्विंटल में)',
+    lbl_weight_mode: 'मात्रा प्रविष्टि विधि',
+    opt_mode_land: 'जमीन का रकबा (एकड़)',
+    opt_mode_exact: 'सटीक फसल वजन (क्विंटल)',
+    lbl_exact_weight: 'सटीक फसल वजन (क्विंटल)',
     btn_confirm_booking: 'बुकिंग की पुष्टि करें व डिजिटल टोकन प्राप्त करें',
     track_title: 'डिजिटल टोकन लाइव ट्रैकर',
     track_subtitle: 'गेट चेक-इन, एआई गुणवत्ता परीक्षण, धर्मकांटा रिपोर्ट एवं प्रत्यक्ष बैंक हस्तांतरण (DBT)।',
@@ -265,8 +269,23 @@ function renderCropSelector() {
 }
 
 async function updateYieldCalculation() {
+  const weightMode = document.getElementById('book-weight-mode')?.value || 'ESTIMATE';
   const landInput = document.getElementById('book-land');
-  const acres = parseFloat(landInput?.value) || 3.5;
+  const exactWeightInput = document.getElementById('book-exact-weight');
+  const cropObj = state.crops.find((c) => c.name === state.selectedCrop);
+  const multiplier = cropObj ? cropObj.multiplier : 18;
+
+  let acres = 3.5;
+  let exactWeight = 0;
+
+  if (weightMode === 'EXACT') {
+    exactWeight = parseFloat(exactWeightInput?.value) || 50.0;
+    acres = exactWeight > 0 ? (exactWeight / multiplier) : 3.5;
+  } else {
+    acres = parseFloat(landInput?.value) || 3.5;
+    exactWeight = acres * multiplier;
+  }
+
   const isSmall = acres <= 5.0;
 
   // Update Equity badge
@@ -274,16 +293,16 @@ async function updateYieldCalculation() {
   if (eqBadge) {
     if (isSmall) {
       eqBadge.className = 'badge badge-safe';
-      eqBadge.innerText = `Small Farmer (${acres} Ac ≤ 5 Ac) - Guaranteed 40% Center Quota`;
+      eqBadge.innerText = weightMode === 'EXACT'
+        ? `Small Farmer (≤50 Q / ~${acres.toFixed(1)} Ac) - Guaranteed 40% Center Quota`
+        : `Small Farmer (${acres.toFixed(1)} Ac ≤ 5 Ac) - Guaranteed 40% Center Quota`;
     } else {
       eqBadge.className = 'badge badge-warning';
-      eqBadge.innerText = `Large Farmer (${acres} Ac > 5 Ac) - 50Q Daily Capping Applied`;
+      eqBadge.innerText = weightMode === 'EXACT'
+        ? `Large Farmer (>50 Q / ~${acres.toFixed(1)} Ac) - 50Q Daily Capping Applied`
+        : `Large Farmer (${acres.toFixed(1)} Ac > 5 Ac) - 50Q Daily Capping Applied`;
     }
   }
-
-  const weightMode = document.getElementById('book-weight-mode')?.value || 'ESTIMATE';
-  const exactWeightInput = document.getElementById('book-exact-weight');
-  const exactWeight = parseFloat(exactWeightInput?.value) || 0;
 
   const reqBody = {
     crop_name: state.selectedCrop,
@@ -433,11 +452,16 @@ function setupBookingForm() {
   const landInput = document.getElementById('book-land');
   const weightModeSelect = document.getElementById('book-weight-mode');
   const exactWeightInput = document.getElementById('book-exact-weight');
-  const exactWeightContainer = document.getElementById('exact-weight-container');
+  const landInputGroup = document.getElementById('land-input-group');
+  const exactWeightGroup = document.getElementById('exact-weight-group');
 
   function handleWeightModeChange() {
-    if (weightModeSelect && weightModeSelect.value === 'EXACT') {
-      if (exactWeightContainer) exactWeightContainer.style.display = 'block';
+    const isExact = weightModeSelect && weightModeSelect.value === 'EXACT';
+    if (isExact) {
+      if (landInputGroup) landInputGroup.style.display = 'none';
+      if (exactWeightGroup) exactWeightGroup.style.display = 'block';
+      if (landInput) landInput.removeAttribute('required');
+      if (exactWeightInput) exactWeightInput.setAttribute('required', 'required');
       if (exactWeightInput && (!exactWeightInput.value || parseFloat(exactWeightInput.value) <= 0)) {
         const cropObj = state.crops.find((c) => c.name === state.selectedCrop);
         const multiplier = cropObj ? cropObj.multiplier : 18;
@@ -445,7 +469,10 @@ function setupBookingForm() {
         exactWeightInput.value = (acres * multiplier).toFixed(1);
       }
     } else {
-      if (exactWeightContainer) exactWeightContainer.style.display = 'none';
+      if (landInputGroup) landInputGroup.style.display = 'block';
+      if (exactWeightGroup) exactWeightGroup.style.display = 'none';
+      if (landInput) landInput.setAttribute('required', 'required');
+      if (exactWeightInput) exactWeightInput.removeAttribute('required');
     }
     updateYieldCalculation();
   }
@@ -468,10 +495,20 @@ function setupBookingForm() {
     const phone = document.getElementById('book-phone').value.trim();
     const name = document.getElementById('book-name').value.trim();
     const village = document.getElementById('book-village').value.trim();
-    const land = parseFloat(document.getElementById('book-land').value);
     const tractor = document.getElementById('book-tractor').value.trim();
     const weightMode = document.getElementById('book-weight-mode').value;
-    const exactWeight = parseFloat(document.getElementById('book-exact-weight')?.value) || null;
+    const cropObj = state.crops.find((c) => c.name === state.selectedCrop);
+    const multiplier = cropObj ? cropObj.multiplier : 18;
+
+    let land = 3.5;
+    let exactWeight = null;
+
+    if (weightMode === 'EXACT') {
+      exactWeight = parseFloat(document.getElementById('book-exact-weight')?.value) || 50.0;
+      land = parseFloat((exactWeight / multiplier).toFixed(2));
+    } else {
+      land = parseFloat(document.getElementById('book-land').value) || 3.5;
+    }
 
     const btn = document.getElementById('btn-submit-booking');
     btn.disabled = true;

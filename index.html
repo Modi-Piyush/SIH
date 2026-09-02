@@ -19,24 +19,26 @@
   <div id="toast-container" aria-live="polite"></div>
 
   <!-- Top Navigation Header -->
-  <header class="glass-panel" style="margin: 1rem 1.5rem; padding: 0.85rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-    <div style="display: flex; align-items: center; gap: 0.85rem;">
-      <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
-        🌾
-      </div>
-      <div>
-        <h1 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 0.5rem;">
-          <span id="app-title">e-Kisan Krishi Samridhi</span>
-          <span class="badge badge-safe" style="font-size: 0.65rem;">SIH PS 26032</span>
-        </h1>
-        <p style="font-size: 0.75rem; color: var(--text-muted);" id="app-subtitle">
-          Smart Storage-Aware Procurement & AI Quality Supply Chain Platform
-        </p>
+  <header class="glass-panel app-header">
+    <div class="app-header-top">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); flex-shrink: 0;">
+          🌾
+        </div>
+        <div>
+          <h1 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+            <span id="app-title">e-Kisan Krishi Samridhi</span>
+            <span class="badge badge-safe" style="font-size: 0.6rem; padding: 0.2rem 0.5rem;">SIH PS 26032</span>
+          </h1>
+          <p style="font-size: 0.72rem; color: var(--text-muted);" id="app-subtitle">
+            Smart Storage-Aware Procurement & AI Quality Supply Chain Platform
+          </p>
+        </div>
       </div>
     </div>
 
-    <!-- Role Switcher Tabs -->
-    <nav style="display: flex; align-items: center; gap: 0.5rem; background: rgba(15, 23, 42, 0.8); padding: 0.35rem; border-radius: var(--radius-md); border: 1px solid var(--border); flex-wrap: wrap;">
+    <!-- Role Switcher Tabs (Horizontal Touch-Scroll on Mobile) -->
+    <nav class="nav-role-container">
       <button class="btn btn-sm btn-primary nav-tab" data-target="view-farmer" id="tab-farmer">
         🌾 <span data-i18n="nav_farmer">Farmer Portal</span>
       </button>
@@ -55,32 +57,32 @@
     </nav>
 
     <!-- System Controls: Offline Simulation & Language Toggle -->
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <!-- Simulated Offline Switch for Judges -->
-      <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(30, 41, 59, 0.6); padding: 0.4rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
-        <label for="offline-sim-toggle" style="font-size: 0.75rem; font-weight: 600; cursor: pointer; color: var(--text-muted);" id="offline-toggle-label">
-          Simulate Offline:
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <!-- Simulated Offline Switch -->
+      <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(30, 41, 59, 0.6); padding: 0.35rem 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--border-steel);">
+        <label for="offline-sim-toggle" style="font-size: 0.72rem; font-weight: 600; cursor: pointer; color: var(--text-muted);" id="offline-toggle-label">
+          Offline:
         </label>
         <input type="checkbox" id="offline-sim-toggle" style="cursor: pointer;">
-        <span id="network-status-badge" class="badge badge-safe">Online</span>
+        <span id="network-status-badge" class="badge badge-safe" style="font-size: 0.65rem; padding: 0.2rem 0.5rem;">Online</span>
       </div>
 
       <!-- Language Toggle -->
-      <button class="btn btn-sm btn-secondary" id="lang-toggle-btn" style="padding: 0.4rem 0.8rem; font-weight: 700;">
+      <button class="btn btn-sm btn-secondary" id="lang-toggle-btn" style="padding: 0.35rem 0.75rem; font-weight: 700; font-size: 0.8rem;">
         🌐 <span id="current-lang-text">हिन्दी</span>
       </button>
     </div>
   </header>
 
   <!-- Main Content View Area -->
-  <main style="max-width: 1400px; margin: 0 auto 6rem auto; padding: 0 1.5rem;">
+  <main class="app-main">
 
     <!-- ========================================================================= -->
     <!-- 1. FARMER PORTAL VIEW -->
     <!-- ========================================================================= -->
     <section id="view-farmer" class="view-section">
       <!-- Farmer Navigation Sub-tabs -->
-      <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+      <div class="subtab-scroll-container">
         <button class="btn btn-sm btn-primary farmer-subtab" data-subtarget="farmer-booking">
           ✍️ <span data-i18n="farmer_tab_book">Smart Slot Booking</span>
         </button>
@@ -132,10 +134,25 @@
                 <input type="text" id="book-village" class="form-input" placeholder="e.g. Rampur Kalan" value="Rampur Kalan" required>
               </div>
 
-              <!-- Land Area (Acres) -->
+              <!-- Input Mode Selection Dropdown -->
               <div>
+                <label class="form-label" data-i18n="lbl_weight_mode">Quantity Input Method</label>
+                <select id="book-weight-mode" class="form-select">
+                  <option value="ESTIMATE" data-i18n="opt_mode_land">Landholding Area (Acres)</option>
+                  <option value="EXACT" data-i18n="opt_mode_exact">Exact Crop Weight (Quintals)</option>
+                </select>
+              </div>
+
+              <!-- Dynamic Input: Landholding Area (Acres) -->
+              <div id="land-input-group">
                 <label class="form-label" data-i18n="lbl_land">Landholding Area (Acres)</label>
                 <input type="number" step="0.1" min="0.1" id="book-land" class="form-input" placeholder="e.g. 3.5" value="3.5" required>
+              </div>
+
+              <!-- Dynamic Input: Exact Weight (Quintals) -->
+              <div id="exact-weight-group" style="display: none;">
+                <label class="form-label" data-i18n="lbl_exact_weight">Exact Crop Weight (Quintals)</label>
+                <input type="number" step="0.1" min="0.1" id="book-exact-weight" class="form-input" placeholder="e.g. 50.0" value="50.0">
               </div>
             </div>
 
@@ -170,23 +187,10 @@
               </div>
             </div>
 
-            <!-- Vehicle / Tractor Number & Weight Estimation Mode -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
-              <div>
-                <label class="form-label" data-i18n="lbl_tractor">Tractor / Vehicle Number</label>
-                <input type="text" id="book-tractor" class="form-input" placeholder="e.g. UP-65-AB-1234" value="UP-65-AB-1234">
-              </div>
-              <div>
-                <label class="form-label" data-i18n="lbl_weight_mode">Weight Estimation Mode</label>
-                <select id="book-weight-mode" class="form-select">
-                  <option value="ESTIMATE">Land Multiplier Formula (Acres × Crop Q/Acre)</option>
-                  <option value="EXACT">Exact Weight (Quintals)</option>
-                </select>
-              </div>
-              <div id="exact-weight-container" style="display: none;">
-                <label class="form-label" data-i18n="lbl_exact_weight">Exact Weight (Quintals)</label>
-                <input type="number" step="0.1" min="0.1" id="book-exact-weight" class="form-input" placeholder="e.g. 50.0" value="50.0">
-              </div>
+            <!-- Vehicle / Tractor Number -->
+            <div style="margin-bottom: 1.5rem;">
+              <label class="form-label" data-i18n="lbl_tractor">Tractor / Vehicle Number</label>
+              <input type="text" id="book-tractor" class="form-input" placeholder="e.g. UP-65-AB-1234" value="UP-65-AB-1234">
             </div>
 
             <!-- Submit Action -->
@@ -450,15 +454,15 @@
         <!-- Offline Queue & Synced Audit Logs -->
         <div style="margin-top: 2rem;">
           <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 0.75rem;">Local Terminal Sync Log (IndexedDB Queue)</h4>
-          <div class="glass-card" style="overflow-x: auto;">
-            <table style="width: 100%; font-size: 0.85rem; text-align: left; border-collapse: collapse;">
+          <div class="table-responsive">
+            <table class="industrial-table">
               <thead>
-                <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted);">
-                  <th style="padding: 0.5rem;">Client Tx ID</th>
-                  <th style="padding: 0.5rem;">Token</th>
-                  <th style="padding: 0.5rem;">Action</th>
-                  <th style="padding: 0.5rem;">Local Timestamp</th>
-                  <th style="padding: 0.5rem;">Sync Status</th>
+                <tr>
+                  <th>Client Tx ID</th>
+                  <th>Token</th>
+                  <th>Action</th>
+                  <th>Local Timestamp</th>
+                  <th>Sync Status</th>
                 </tr>
               </thead>
               <tbody id="guard-sync-table-body">
@@ -494,25 +498,27 @@
         </div>
 
         <!-- Live Checked-In Queue Table -->
-        <div class="glass-card" style="margin-bottom: 2rem; overflow-x: auto;">
+        <div style="margin-bottom: 2rem;">
           <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 1rem;">Checked-In Farmer Queue (Ready for Inspection & Weighment)</h4>
-          <table style="width: 100%; font-size: 0.875rem; text-align: left; border-collapse: collapse;">
-            <thead>
-              <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted);">
-                <th style="padding: 0.75rem;">Token</th>
-                <th style="padding: 0.75rem;">Farmer Name</th>
-                <th style="padding: 0.75rem;">Crop</th>
-                <th style="padding: 0.75rem;">Allocated Q</th>
-                <th style="padding: 0.75rem;">Arrival Slot</th>
-                <th style="padding: 0.75rem;">Tractor No</th>
-                <th style="padding: 0.75rem;">Status</th>
-                <th style="padding: 0.75rem;">Action</th>
-              </tr>
-            </thead>
-            <tbody id="clerk-queue-table-body">
-              <!-- Dynamically populated checked-in rows -->
-            </tbody>
-          </table>
+          <div class="table-responsive">
+            <table class="industrial-table">
+              <thead>
+                <tr>
+                  <th>Token</th>
+                  <th>Farmer Name</th>
+                  <th>Crop</th>
+                  <th>Allocated Q</th>
+                  <th>Arrival Slot</th>
+                  <th>Tractor No</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="clerk-queue-table-body">
+                <!-- Dynamically populated checked-in rows -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Processing / Fulfillment Modal Area -->
@@ -639,7 +645,7 @@
         </div>
 
         <!-- Top Level KPI Metric Counters (FR24) -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div class="metrics-grid-responsive" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
           <div class="glass-card">
             <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Farmers</div>
             <div style="font-size: 1.8rem; font-weight: 800; color: #ffffff;" id="kpi-farmers">0</div>
@@ -773,45 +779,7 @@
 
   </main>
 
-  <!-- ========================================================================= -->
-  <!-- JUDGE 8-MINUTE DEMO EVALUATION TOUR BAR -->
-  <!-- ========================================================================= -->
-  <aside class="judge-bar" id="judge-tour-bar">
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <span style="font-size: 1.25rem;">⚖️</span>
-      <div>
-        <div style="font-size: 0.85rem; font-weight: 800; color: #ffffff;">Judge 8-Minute Evaluation Tour</div>
-        <div style="font-size: 0.7rem; color: var(--text-muted);">1-Click PRD Scenario Shortcuts</div>
-      </div>
-    </div>
 
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-      <button class="btn btn-secondary btn-sm" onclick="runJudgeTourStep(1)" title="Test Smallholder Booking">
-        1. Small Farmer (3.5 Ac)
-      </button>
-      <button class="btn btn-secondary btn-sm" onclick="runJudgeTourStep(2)" title="Test 50Q Auto-Tranching">
-        2. Large Farmer (12 Ac / 3 Tranches)
-      </button>
-      <button class="btn btn-secondary btn-sm" onclick="runJudgeTourStep(3)" title="Test 84% Warning & Evacuation">
-        3. Storage Warning (84%)
-      </button>
-      <button class="btn btn-secondary btn-sm" onclick="runJudgeTourStep(4)" title="Test 96% Lock & 15km Reroute">
-        4. Storage Lockout & 15km Reroute
-      </button>
-      <button class="btn btn-secondary btn-sm" onclick="runJudgeTourStep(5)" title="Test High Moisture AI Reject">
-        5. AI Moisture Reject (&gt;16.5%)
-      </button>
-      <button class="btn btn-secondary btn-sm" onclick="runJudgeTourStep(6)" title="Test True Offline Check-In & Sync">
-        6. Offline Check-In & Sync
-      </button>
-      <button class="btn btn-secondary btn-sm" onclick="runJudgeTourStep(7)" title="Test Mandi Clerk Fulfillment">
-        7. Clerk Atomic Fulfillment
-      </button>
-      <button class="btn btn-danger btn-sm" onclick="resetDemoData()" title="Reset to Pristine State">
-        🔄 Reset Demo Data
-      </button>
-    </div>
-  </aside>
 
   <!-- ========================================================================= -->
   <!-- ELECTRONIC PROCUREMENT RECEIPT MODAL (PRINTABLE) -->
