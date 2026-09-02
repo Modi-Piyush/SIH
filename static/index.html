@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>e-Kisan Krishi Samridhi | Smart Farmer Procurement & Supply Chain Platform</title>
-  <meta name="description" content="SIH PS 26032: Storage-aware farmer procurement, AI crop quality inspection, and offline-resilient supply chain platform.">
-  
+  <meta name="description"
+    content="SIH PS 26032: Storage-aware farmer procurement, AI crop quality inspection, and offline-resilient supply chain platform.">
+
   <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="/static/css/style.css">
-  
+
   <!-- External Libraries (QR Code & Icons) -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body>
 
   <!-- Toast Notification Container -->
@@ -22,11 +25,13 @@
   <header class="glass-panel app-header">
     <div class="app-header-top">
       <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); flex-shrink: 0;">
+        <div
+          style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); flex-shrink: 0;">
           🌾
         </div>
         <div>
-          <h1 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+          <h1
+            style="font-size: 1.15rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
             <span id="app-title">e-Kisan Krishi Samridhi</span>
             <span class="badge badge-safe" style="font-size: 0.6rem; padding: 0.2rem 0.5rem;">SIH PS 26032</span>
           </h1>
@@ -56,19 +61,29 @@
       </button>
     </nav>
 
-    <!-- System Controls: Offline Simulation & Language Toggle -->
+    <!-- System Controls: Offline Simulation & Language Toggle & Reset Demo -->
     <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <!-- Reset Demo State Button -->
+      <button class="btn btn-sm btn-secondary" id="btn-reset-demo" onclick="resetDemoData()" title="Reset database and demo bookings to initial pristine state" style="padding: 0.35rem 0.65rem; font-size: 0.75rem; border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">
+        🔄 Reset Demo Data
+      </button>
+
       <!-- Simulated Offline Switch -->
-      <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(30, 41, 59, 0.6); padding: 0.35rem 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--border-steel);">
-        <label for="offline-sim-toggle" style="font-size: 0.72rem; font-weight: 600; cursor: pointer; color: var(--text-muted);" id="offline-toggle-label">
+      <div
+        style="display: flex; align-items: center; gap: 0.4rem; background: rgba(30, 41, 59, 0.6); padding: 0.35rem 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--border-steel);">
+        <label for="offline-sim-toggle"
+          style="font-size: 0.72rem; font-weight: 600; cursor: pointer; color: var(--text-muted);"
+          id="offline-toggle-label">
           Offline:
         </label>
         <input type="checkbox" id="offline-sim-toggle" style="cursor: pointer;">
-        <span id="network-status-badge" class="badge badge-safe" style="font-size: 0.65rem; padding: 0.2rem 0.5rem;">Online</span>
+        <span id="network-status-badge" class="badge badge-safe"
+          style="font-size: 0.65rem; padding: 0.2rem 0.5rem;">Online</span>
       </div>
 
       <!-- Language Toggle -->
-      <button class="btn btn-sm btn-secondary" id="lang-toggle-btn" style="padding: 0.35rem 0.75rem; font-weight: 700; font-size: 0.8rem;">
+      <button class="btn btn-sm btn-secondary" id="lang-toggle-btn"
+        style="padding: 0.35rem 0.75rem; font-weight: 700; font-size: 0.8rem;">
         🌐 <span id="current-lang-text">हिन्दी</span>
       </button>
     </div>
@@ -100,7 +115,8 @@
       <!-- Sub-view 1: Smart Slot Booking Wizard -->
       <div id="farmer-booking" class="farmer-subview">
         <div class="glass-panel" style="padding: 2rem;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+          <div
+            style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
             <div>
               <h2 style="font-size: 1.5rem; color: #ffffff;" data-i18n="booking_title">
                 Smart Storage-Aware Slot Booking
@@ -115,23 +131,27 @@
           </div>
 
           <form id="slot-booking-form">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+            <div
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
               <!-- Farmer Phone -->
               <div>
                 <label class="form-label" data-i18n="lbl_phone">Mobile Number (10 Digits)</label>
-                <input type="tel" id="book-phone" class="form-input" placeholder="e.g. 9876543210" value="9876543210" required pattern="^[6-9]\d{9}$">
+                <input type="tel" id="book-phone" class="form-input" placeholder="e.g. 9876543210" value="9876543210"
+                  required pattern="^[6-9]\d{9}$">
               </div>
 
               <!-- Farmer Name -->
               <div>
                 <label class="form-label" data-i18n="lbl_name">Farmer Full Name</label>
-                <input type="text" id="book-name" class="form-input" placeholder="e.g. Ramesh Kumar Sharma" value="Ramesh Kumar Sharma" required>
+                <input type="text" id="book-name" class="form-input" placeholder="e.g. Ramesh Kumar Sharma"
+                  value="Ramesh Kumar Sharma" required>
               </div>
 
               <!-- Village -->
               <div>
                 <label class="form-label" data-i18n="lbl_village">Village / Gram</label>
-                <input type="text" id="book-village" class="form-input" placeholder="e.g. Rampur Kalan" value="Rampur Kalan" required>
+                <input type="text" id="book-village" class="form-input" placeholder="e.g. Rampur Kalan"
+                  value="Rampur Kalan" required>
               </div>
 
               <!-- Input Mode Selection Dropdown -->
@@ -146,43 +166,52 @@
               <!-- Dynamic Input: Landholding Area (Acres) -->
               <div id="land-input-group">
                 <label class="form-label" data-i18n="lbl_land">Landholding Area (Acres)</label>
-                <input type="number" step="0.1" min="0.1" id="book-land" class="form-input" placeholder="e.g. 3.5" value="3.5" required>
+                <input type="number" step="0.1" min="0.1" id="book-land" class="form-input" placeholder="e.g. 3.5"
+                  value="3.5" required>
               </div>
 
               <!-- Dynamic Input: Exact Weight (Quintals) -->
               <div id="exact-weight-group" style="display: none;">
                 <label class="form-label" data-i18n="lbl_exact_weight">Exact Crop Weight (Quintals)</label>
-                <input type="number" step="0.1" min="0.1" id="book-exact-weight" class="form-input" placeholder="e.g. 50.0" value="50.0">
+                <input type="number" step="0.1" min="0.1" id="book-exact-weight" class="form-input"
+                  placeholder="e.g. 50.0" value="50.0">
               </div>
             </div>
 
             <!-- Crop Selection -->
             <div style="margin-bottom: 1.5rem;">
               <label class="form-label" data-i18n="lbl_crop">Select Crop to Procure</label>
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem;" id="crop-selector-grid">
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem;"
+                id="crop-selector-grid">
                 <!-- Populated dynamically: Wheat, Paddy, Maize, Tur, Chana, Masoor, etc. -->
               </div>
             </div>
 
             <!-- Yield & Tranche Calculation Preview Card -->
             <div class="glass-card" style="margin-bottom: 1.5rem; border-color: rgba(16, 185, 129, 0.3);">
-              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+              <div
+                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
-                  <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--primary); font-weight: 700;" data-i18n="lbl_yield_estimate">Yield Estimation & Capping</span>
-                  <h3 style="font-size: 1.35rem; color: #ffffff;" id="yield-preview-text">50.0 Quintals (Wheat @ 18 Q/Acre)</h3>
-                  <p style="font-size: 0.8rem; color: var(--text-muted);" id="yield-msp-text">Estimated Gross MSP Value: ₹1,13,750</p>
+                  <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--primary); font-weight: 700;"
+                    data-i18n="lbl_yield_estimate">Yield Estimation & Capping</span>
+                  <h3 style="font-size: 1.35rem; color: #ffffff;" id="yield-preview-text">50.0 Quintals (Wheat @ 18
+                    Q/Acre)</h3>
+                  <p style="font-size: 0.8rem; color: var(--text-muted);" id="yield-msp-text">Estimated Gross MSP Value:
+                    ₹1,13,750</p>
                 </div>
                 <div id="tranche-notice-box" style="text-align: right;">
                   <span class="badge badge-safe" id="tranche-badge">Single 1-Day Booking (≤50 Q)</span>
                 </div>
               </div>
-              <div id="tranche-timeline-container" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);"></div>
+              <div id="tranche-timeline-container"
+                style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);"></div>
             </div>
 
             <!-- Procurement Center Selection with Live Storage Gauges -->
             <div style="margin-bottom: 1.5rem;">
               <label class="form-label" data-i18n="lbl_select_center">Select Procurement Center (PACS Godown)</label>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;" id="center-selection-grid">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;"
+                id="center-selection-grid">
                 <!-- Populated dynamically with storage meters and critical lockout badges -->
               </div>
             </div>
@@ -190,12 +219,14 @@
             <!-- Vehicle / Tractor Number -->
             <div style="margin-bottom: 1.5rem;">
               <label class="form-label" data-i18n="lbl_tractor">Tractor / Vehicle Number</label>
-              <input type="text" id="book-tractor" class="form-input" placeholder="e.g. UP-65-AB-1234" value="UP-65-AB-1234">
+              <input type="text" id="book-tractor" class="form-input" placeholder="e.g. UP-65-AB-1234"
+                value="UP-65-AB-1234">
             </div>
 
             <!-- Submit Action -->
             <div style="display: flex; justify-content: flex-end; gap: 1rem; align-items: center;">
-              <button type="submit" class="btn btn-primary" id="btn-submit-booking" style="padding: 0.85rem 2rem; font-size: 1.05rem;">
+              <button type="submit" class="btn btn-primary" id="btn-submit-booking"
+                style="padding: 0.85rem 2rem; font-size: 1.05rem;">
                 🎟️ <span data-i18n="btn_confirm_booking">Confirm Booking & Generate Digital Token</span>
               </button>
             </div>
@@ -206,7 +237,8 @@
       <!-- Sub-view 2: Digital Token & Live Pipeline Tracking -->
       <div id="farmer-track" class="farmer-subview" style="display: none;">
         <div class="glass-panel" style="padding: 2rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
             <div>
               <h2 style="font-size: 1.5rem; color: #ffffff;" data-i18n="track_title">Live Digital Token Tracker</h2>
               <p style="font-size: 0.875rem; color: var(--text-muted);" data-i18n="track_subtitle">
@@ -214,7 +246,8 @@
               </p>
             </div>
             <div style="display: flex; gap: 0.5rem;">
-              <input type="text" id="track-token-input" class="form-input" placeholder="Enter Token e.g. TK-78401" value="TK-78401" style="width: 180px;">
+              <input type="text" id="track-token-input" class="form-input" placeholder="Enter Token e.g. TK-78401"
+                value="TK-78401" style="width: 180px;">
               <button class="btn btn-primary btn-sm" id="btn-search-token">🔍 Track</button>
             </div>
           </div>
@@ -245,17 +278,22 @@
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+            <div
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
               <!-- Digital Token & QR Code Card -->
               <div class="glass-card" style="text-align: center; border-color: rgba(16, 185, 129, 0.4);">
                 <span class="badge badge-safe" id="token-status-badge">CONFIRMED</span>
                 <h3 style="font-size: 1.8rem; margin: 0.5rem 0; color: #ffffff;" id="token-code-text">TK-78401</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;" id="token-center-text">Rampur PACS Center</p>
-                
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;" id="token-center-text">
+                  Rampur PACS Center</p>
+
                 <!-- QR Code Output Area -->
-                <div style="background: #ffffff; padding: 1rem; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 1rem;" id="qrcode-box"></div>
-                
-                <div style="font-size: 0.8rem; color: var(--text-muted); text-align: left; background: rgba(15, 23, 42, 0.6); padding: 0.75rem; border-radius: var(--radius-sm);">
+                <div
+                  style="background: #ffffff; padding: 1rem; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 1rem;"
+                  id="qrcode-box"></div>
+
+                <div
+                  style="font-size: 0.8rem; color: var(--text-muted); text-align: left; background: rgba(15, 23, 42, 0.6); padding: 0.75rem; border-radius: var(--radius-sm);">
                   <div><strong>Farmer:</strong> <span id="token-farmer-text">Ramesh Kumar Sharma</span></div>
                   <div><strong>Crop & Weight:</strong> <span id="token-crop-weight-text">Wheat - 50.0 Q</span></div>
                   <div><strong>Arrival Window:</strong> <span id="token-window-text">08:00 AM - 10:00 AM</span></div>
@@ -266,7 +304,8 @@
               <!-- Live Procurement Summary & Receipt Action -->
               <div class="glass-card">
                 <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 1rem;">Procurement Journey Details</h4>
-                <div id="token-live-details" style="font-size: 0.875rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <div id="token-live-details"
+                  style="font-size: 0.875rem; display: flex; flex-direction: column; gap: 0.75rem;">
                   <!-- Dynamic details -->
                 </div>
                 <div id="receipt-action-box" style="margin-top: 1.5rem; display: none;">
@@ -283,7 +322,8 @@
       <!-- Sub-view 3: AI Moisture & Quality Pre-Screening -->
       <div id="farmer-prescreen" class="farmer-subview" style="display: none;">
         <div class="glass-panel" style="padding: 2rem;">
-          <h2 style="font-size: 1.5rem; color: #ffffff;" data-i18n="prescreen_title">AI Crop Quality & Moisture Pre-Check</h2>
+          <h2 style="font-size: 1.5rem; color: #ffffff;" data-i18n="prescreen_title">AI Crop Quality & Moisture
+            Pre-Check</h2>
           <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">
             Test your grain sample photo before traveling to the Mandi. Save travel time and prevent gate rejections.
           </p>
@@ -291,29 +331,37 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
             <!-- Upload & Presets -->
             <div class="glass-card">
-              <h4 style="font-size: 1rem; color: #ffffff; margin-bottom: 0.75rem;">1. Upload Grain Photo or Try Presets</h4>
-              
+              <h4 style="font-size: 1rem; color: #ffffff; margin-bottom: 0.75rem;">1. Upload Grain Photo or Try Presets
+              </h4>
+
               <!-- File Input -->
-              <div style="border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin-bottom: 1rem;">
+              <div
+                style="border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; margin-bottom: 1rem;">
                 <input type="file" id="prescreen-file-input" accept="image/*" style="display: none;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('prescreen-file-input').click();">
+                <button type="button" class="btn btn-secondary btn-sm"
+                  onclick="document.getElementById('prescreen-file-input').click();">
                   📷 Upload Grain Sample Photo
                 </button>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;" id="prescreen-filename-text">No file chosen</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;"
+                  id="prescreen-filename-text">No file chosen</p>
               </div>
 
               <!-- Presets for fast testing -->
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Quick-Test Preset Samples:</p>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Quick-Test Preset Samples:
+              </p>
               <div style="display: flex; gap: 0.5rem; flex-direction: column;">
-                <button class="btn btn-secondary btn-sm" style="text-align: left; justify-content: space-between;" onclick="runPreScreenSimulation('dry_wheat')">
+                <button class="btn btn-secondary btn-sm" style="text-align: left; justify-content: space-between;"
+                  onclick="runPreScreenSimulation('dry_wheat')">
                   <span>🌾 Prime Dry Wheat Sample</span>
                   <span class="badge badge-safe">Moisture ~12.4%</span>
                 </button>
-                <button class="btn btn-secondary btn-sm" style="text-align: left; justify-content: space-between;" onclick="runPreScreenSimulation('medium_moist')">
+                <button class="btn btn-secondary btn-sm" style="text-align: left; justify-content: space-between;"
+                  onclick="runPreScreenSimulation('medium_moist')">
                   <span>🌾 Medium Moist Wheat Sample</span>
                   <span class="badge badge-warning">Moisture ~15.2%</span>
                 </button>
-                <button class="btn btn-secondary btn-sm" style="text-align: left; justify-content: space-between;" onclick="runPreScreenSimulation('wet_grain')">
+                <button class="btn btn-secondary btn-sm" style="text-align: left; justify-content: space-between;"
+                  onclick="runPreScreenSimulation('wet_grain')">
                   <span>🌾 Excessively Wet Grain Sample</span>
                   <span class="badge badge-critical">Moisture ~18.6% (Reject Risk)</span>
                 </button>
@@ -327,14 +375,17 @@
                 <span class="badge badge-safe" id="ai-grade-badge">Grade A (Prime)</span>
               </div>
 
-              <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem; margin-bottom: 1rem;">
+              <div
+                style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem; margin-bottom: 1rem;">
                 <div style="font-size: 0.75rem; color: #60a5fa; font-weight: 700;">⚠️ MANDATORY ADVISORY</div>
                 <div style="font-size: 0.75rem; color: var(--text-muted);" id="ai-disclaimer-text">
-                  AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and physical inspection happen at Mandi.
+                  AI-assisted preliminary assessment (Non-laboratory heuristic estimation). Official weighbridge and
+                  physical inspection happen at Mandi.
                 </div>
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.85rem; margin-bottom: 1rem;">
+              <div
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.85rem; margin-bottom: 1rem;">
                 <div class="glass-card" style="padding: 0.75rem;">
                   <div style="font-size: 0.75rem; color: var(--text-muted);">Estimated Moisture</div>
                   <div style="font-size: 1.25rem; font-weight: 800; color: #34d399;" id="ai-moisture-val">12.4%</div>
@@ -353,10 +404,13 @@
                 </div>
               </div>
 
-              <div style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 0.75rem; border-radius: var(--radius-sm);" id="ai-recommendation-box">
+              <div
+                style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 0.75rem; border-radius: var(--radius-sm);"
+                id="ai-recommendation-box">
                 <strong style="color: #34d399; font-size: 0.85rem;">Farmer Recommendation:</strong>
                 <p style="font-size: 0.8rem; color: var(--text-main); margin-top: 0.25rem;" id="ai-recommendation-text">
-                  Excellent — ready for immediate procurement. Moisture within safe threshold (&lt;14.5%). Proceed to Mandi.
+                  Excellent — ready for immediate procurement. Moisture within safe threshold (&lt;14.5%). Proceed to
+                  Mandi.
                 </p>
               </div>
             </div>
@@ -367,13 +421,17 @@
       <!-- Sub-view 4: Farmer History & SMS Notifications Inbox -->
       <div id="farmer-history" class="farmer-subview" style="display: none;">
         <div class="glass-panel" style="padding: 2rem;">
-          <h2 style="font-size: 1.5rem; color: #ffffff;" data-i18n="history_title">My Procurement History & SMS Alerts</h2>
-          
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+          <h2 style="font-size: 1.5rem; color: #ffffff;" data-i18n="history_title">My Procurement History & SMS Alerts
+          </h2>
+
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
             <!-- SMS Inbox -->
             <div class="glass-card">
-              <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 1rem;">📱 Simulated SMS Inbox (Mobile Notifications)</h4>
-              <div id="sms-inbox-list" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 400px; overflow-y: auto;">
+              <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 1rem;">📱 Simulated SMS Inbox (Mobile
+                Notifications)</h4>
+              <div id="sms-inbox-list"
+                style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 400px; overflow-y: auto;">
                 <!-- Dynamically populated SMS logs -->
               </div>
             </div>
@@ -381,7 +439,8 @@
             <!-- Past Receipts -->
             <div class="glass-card">
               <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 1rem;">📜 Digital Receipts & DBT Payouts</h4>
-              <div id="farmer-receipts-list" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 400px; overflow-y: auto;">
+              <div id="farmer-receipts-list"
+                style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 400px; overflow-y: auto;">
                 <!-- Dynamically populated receipts -->
               </div>
             </div>
@@ -396,19 +455,22 @@
     <section id="view-guard" class="view-section" style="display: none;">
       <div class="glass-panel" style="padding: 2rem;">
         <!-- Online/Offline Banner -->
-        <div id="guard-offline-banner" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div id="guard-offline-banner"
+          style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
           <div>
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span class="badge badge-safe" id="guard-status-badge">GATE NODE: ONLINE</span>
               <span style="font-size: 0.85rem; font-weight: 700; color: #ffffff;">Rampur PACS Main Gate Terminal</span>
             </div>
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
-              Offline-first verification mode active. All check-ins queue securely into IndexedDB during internet blackout.
+              Offline-first verification mode active. All check-ins queue securely into IndexedDB during internet
+              blackout.
             </p>
           </div>
           <div style="display: flex; gap: 0.5rem; align-items: center;">
             <button class="btn btn-secondary btn-sm" id="btn-refresh-manifest">🔄 Refresh Offline Manifest</button>
-            <button class="btn btn-primary btn-sm" id="btn-sync-offline-queue">⚡ Sync Pending Queue (<span id="guard-pending-count">0</span>)</button>
+            <button class="btn btn-primary btn-sm" id="btn-sync-offline-queue">⚡ Sync Pending Queue (<span
+                id="guard-pending-count">0</span>)</button>
           </div>
         </div>
 
@@ -417,24 +479,27 @@
           <!-- Gate Scanner -->
           <div class="glass-card">
             <h3 style="font-size: 1.25rem; color: #ffffff; margin-bottom: 1rem;">Gate Token Verification & QR Scan</h3>
-            
+
             <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
-              <input type="text" id="guard-token-input" class="form-input" placeholder="Scan or Enter Token (e.g. TK-78401)" value="TK-78401">
+              <input type="text" id="guard-token-input" class="form-input"
+                placeholder="Scan or Enter Token (e.g. TK-78401)" value="TK-78401">
               <button class="btn btn-primary" id="btn-guard-verify">Verify</button>
             </div>
 
             <!-- Quick Demo QR Scan Buttons for Judges -->
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Simulate QR Camera Scan:</p>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <button class="btn btn-secondary btn-sm" onclick="scanTokenDemo('TK-78401')">📷 Scan TK-78401 (Confirmed)</button>
-              <button class="btn btn-secondary btn-sm" onclick="scanTokenDemo('TK-78402')">📷 Scan TK-78402 (Chana)</button>
+              <button class="btn btn-secondary btn-sm" onclick="scanTokenDemo('TK-78401')">📷 Scan TK-78401
+                (Confirmed)</button>
+              <button class="btn btn-secondary btn-sm" onclick="scanTokenDemo('TK-78402')">📷 Scan TK-78402
+                (Chana)</button>
             </div>
           </div>
 
           <!-- Farmer Verification Card -->
           <div class="glass-card" id="guard-verification-card">
             <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 0.75rem;">Verified Booking Manifest Record</h4>
-            
+
             <div id="guard-result-body" style="font-size: 0.875rem; color: var(--text-muted);">
               <p>Scan or enter a token code to verify farmer identity and arrival window.</p>
             </div>
@@ -453,7 +518,8 @@
 
         <!-- Offline Queue & Synced Audit Logs -->
         <div style="margin-top: 2rem;">
-          <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 0.75rem;">Local Terminal Sync Log (IndexedDB Queue)</h4>
+          <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 0.75rem;">Local Terminal Sync Log (IndexedDB
+            Queue)</h4>
           <div class="table-responsive">
             <table class="industrial-table">
               <thead>
@@ -466,7 +532,10 @@
                 </tr>
               </thead>
               <tbody id="guard-sync-table-body">
-                <tr><td colspan="5" style="padding: 1rem; text-align: center; color: var(--text-dim);">No pending offline transactions. Terminal in sync with central server.</td></tr>
+                <tr>
+                  <td colspan="5" style="padding: 1rem; text-align: center; color: var(--text-dim);">No pending offline
+                    transactions. Terminal in sync with central server.</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -479,35 +548,44 @@
     <!-- ========================================================================= -->
     <section id="view-clerk" class="view-section" style="display: none;">
       <div class="glass-panel" style="padding: 2rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
           <div>
-            <h2 style="font-size: 1.5rem; color: #ffffff;">Mandi Clerk: AI Inspection & Weighbridge Desk</h2>
+            <h2 style="font-size: 1.5rem; color: #ffffff;">PACS Clerk: AI Inspection & Weighbridge Desk</h2>
             <p style="font-size: 0.875rem; color: var(--text-muted);">
-              Inspect grain samples, enter official weighbridge gross/tare weights, and execute atomic fulfillment.
+              Live digital token pipeline — see upcoming farmer arrivals, yard queue, AI quality grading, and atomic fulfillment.
             </p>
           </div>
           <div style="display: flex; gap: 0.75rem; align-items: center;">
-            <select id="clerk-center-select" class="form-select" style="width: 240px;">
+            <select id="clerk-center-select" class="form-select" style="width: 260px;">
+              <option value="ALL" selected>🏢 All PACS Centers (District-Wide)</option>
               <option value="1">Rampur PACS Center</option>
               <option value="2">Bilaspur PACS Center</option>
               <option value="3">Sitapur PACS Godown</option>
               <option value="4">Kalyanpur Buffer Depot</option>
             </select>
-            <button class="btn btn-secondary btn-sm" id="btn-refresh-clerk-queue">🔄 Refresh Queue</button>
+            <button class="btn btn-primary btn-sm" id="btn-refresh-clerk-queue" onclick="loadClerkQueue(true)">🔄 Refresh Pipeline</button>
           </div>
         </div>
 
-        <!-- Live Checked-In Queue Table -->
-        <div style="margin-bottom: 2rem;">
-          <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 1rem;">Checked-In Farmer Queue (Ready for Inspection & Weighment)</h4>
+        <!-- Real-time Filter Search Input -->
+        <div style="margin-bottom: 1.5rem;">
+          <input type="text" id="clerk-search-input" class="form-input" placeholder="🔍 Search active tokens or history by Token ID, Farmer Name, Mobile, Crop..." style="max-width: 480px;">
+        </div>
+
+        <!-- 1. Active Checked-In & Scheduled Farmer Queue -->
+        <div style="margin-bottom: 2.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 1.15rem; color: #ffffff; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+              🚚 Active Farmer Queue <span class="badge badge-info" id="clerk-active-count" style="font-size: 0.75rem;">0 ACTIVE</span>
+            </h3>
+          </div>
           <div class="table-responsive">
             <table class="industrial-table">
               <thead>
                 <tr>
                   <th>Token</th>
-                  <th>Farmer Name</th>
-                  <th>Crop</th>
-                  <th>Allocated Q</th>
+                  <th>Farmer Name & Center</th>
+                  <th>Crop & Quota</th>
                   <th>Arrival Slot</th>
                   <th>Tractor No</th>
                   <th>Status</th>
@@ -515,23 +593,54 @@
                 </tr>
               </thead>
               <tbody id="clerk-queue-table-body">
-                <!-- Dynamically populated checked-in rows -->
+                <!-- Dynamically populated active queue rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2. Completed Procurement History & DBT Dispatches -->
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 1.15rem; color: #ffffff; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+              📜 Procurement History & DBT Dispatches <span class="badge badge-safe" id="clerk-history-count" style="font-size: 0.75rem;">0 COMPLETED</span>
+            </h3>
+          </div>
+          <div class="table-responsive">
+            <table class="industrial-table">
+              <thead>
+                <tr>
+                  <th>Token</th>
+                  <th>Farmer Name & Center</th>
+                  <th>Crop & Weight</th>
+                  <th>DBT Payout Disbursed</th>
+                  <th>Receipt Number</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="clerk-history-table-body">
+                <!-- Dynamically populated completed history rows -->
               </tbody>
             </table>
           </div>
         </div>
 
         <!-- Processing / Fulfillment Modal Area -->
-        <div id="clerk-inspection-panel" class="glass-panel" style="padding: 1.75rem; display: none; border-color: var(--primary);">
+        <div id="clerk-inspection-panel" class="glass-panel"
+          style="padding: 1.75rem; display: none; border-color: var(--primary);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
             <div>
               <span class="badge badge-info" id="clerk-active-token">TK-78402</span>
-              <h3 style="font-size: 1.35rem; color: #ffffff; margin-top: 0.35rem;" id="clerk-farmer-name">Vikram Patel - Chana (32.0 Q)</h3>
+              <h3 style="font-size: 1.35rem; color: #ffffff; margin-top: 0.35rem;" id="clerk-farmer-name">Vikram Patel -
+                Chana (32.0 Q)</h3>
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('clerk-inspection-panel').style.display='none'">✕ Close</button>
+            <button class="btn btn-secondary btn-sm"
+              onclick="document.getElementById('clerk-inspection-panel').style.display='none'">✕ Close</button>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
             <!-- AI Quality Inspection Section -->
             <div class="glass-card">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
@@ -560,8 +669,10 @@
               </div>
 
               <!-- Manual Override -->
-              <div style="margin-top: 0.5rem; padding: 0.75rem; background: rgba(15, 23, 42, 0.6); border-radius: var(--radius-sm);">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; cursor: pointer; color: var(--text-muted);">
+              <div
+                style="margin-top: 0.5rem; padding: 0.75rem; background: rgba(15, 23, 42, 0.6); border-radius: var(--radius-sm);">
+                <label
+                  style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; cursor: pointer; color: var(--text-muted);">
                   <input type="checkbox" id="clerk-override-toggle"> Manually Override Grade
                 </label>
                 <div id="clerk-override-box" style="display: none; margin-top: 0.5rem;">
@@ -570,31 +681,37 @@
                     <option value="B">Grade B (Standard Refraction)</option>
                     <option value="REJECTED">Reject Crop</option>
                   </select>
-                  <input type="text" id="clerk-override-reason" class="form-input" placeholder="Override justification reason">
+                  <input type="text" id="clerk-override-reason" class="form-input"
+                    placeholder="Override justification reason">
                 </div>
               </div>
             </div>
 
             <!-- Weighbridge & Tolerance Section -->
             <div class="glass-card">
-              <h4 style="font-size: 1rem; color: #ffffff; margin-bottom: 0.75rem;">2. Official Weighbridge Recording</h4>
-              
+              <h4 style="font-size: 1rem; color: #ffffff; margin-bottom: 0.75rem;">2. Official Weighbridge Recording
+              </h4>
+
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
                 <div>
                   <label class="form-label" style="font-size: 0.75rem;">Gross Weight (Q)</label>
-                  <input type="number" step="0.1" id="clerk-gross-weight" class="form-input" value="52.0" oninput="calculateClerkNetWeight()">
+                  <input type="number" step="0.1" id="clerk-gross-weight" class="form-input" value="52.0"
+                    oninput="calculateClerkNetWeight()">
                 </div>
                 <div>
                   <label class="form-label" style="font-size: 0.75rem;">Tare Weight (Q)</label>
-                  <input type="number" step="0.1" id="clerk-tare-weight" class="form-input" value="20.0" oninput="calculateClerkNetWeight()">
+                  <input type="number" step="0.1" id="clerk-tare-weight" class="form-input" value="20.0"
+                    oninput="calculateClerkNetWeight()">
                 </div>
               </div>
 
               <!-- Net Weight & Tolerance -->
-              <div style="background: rgba(15, 23, 42, 0.8); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+              <div
+                style="background: rgba(15, 23, 42, 0.8); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
                 <div style="display: flex; justify-content: space-between;">
                   <span style="font-size: 0.8rem; color: var(--text-muted);">Actual Net Weight:</span>
-                  <span style="font-size: 1.1rem; font-weight: 800; color: #34d399;" id="clerk-net-weight-text">32.0 Q</span>
+                  <span style="font-size: 1.1rem; font-weight: 800; color: #34d399;" id="clerk-net-weight-text">32.0
+                    Q</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 0.25rem;">
                   <span style="color: var(--text-muted);">Allocated Estimate:</span>
@@ -609,7 +726,8 @@
               <!-- Inspector Notes -->
               <div>
                 <label class="form-label" style="font-size: 0.75rem;">Inspector Notes</label>
-                <input type="text" id="clerk-notes" class="form-input" value="Clean, uniform grain meeting all standard specifications.">
+                <input type="text" id="clerk-notes" class="form-input"
+                  value="Clean, uniform grain meeting all standard specifications.">
               </div>
             </div>
           </div>
@@ -619,7 +737,8 @@
             <button class="btn btn-danger" id="btn-clerk-reject" onclick="triggerClerkReject()">
               ❌ Reject Delivery
             </button>
-            <button class="btn btn-primary" id="btn-clerk-accept-fulfill" style="padding: 0.85rem 2rem; font-size: 1.05rem;" onclick="executeClerkAcceptFulfill()">
+            <button class="btn btn-primary" id="btn-clerk-accept-fulfill"
+              style="padding: 0.85rem 2rem; font-size: 1.05rem;" onclick="executeClerkAcceptFulfill()">
               ✅ Accept Crop & Fulfill Delivery (Atomic)
             </button>
           </div>
@@ -632,7 +751,8 @@
     <!-- ========================================================================= -->
     <section id="view-admin" class="view-section" style="display: none;">
       <div class="glass-panel" style="padding: 2rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
           <div>
             <h2 style="font-size: 1.6rem; color: #ffffff;">District Admin Command Center (DOCA / PACS)</h2>
             <p style="font-size: 0.875rem; color: var(--text-muted);">
@@ -645,34 +765,41 @@
         </div>
 
         <!-- Top Level KPI Metric Counters (FR24) -->
-        <div class="metrics-grid-responsive" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div class="metrics-grid-responsive"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
           <div class="glass-card">
-            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Farmers</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+              Total Farmers</div>
             <div style="font-size: 1.8rem; font-weight: 800; color: #ffffff;" id="kpi-farmers">0</div>
             <div style="font-size: 0.7rem; color: #34d399;" id="kpi-small-farmers">40% Smallholders Protected</div>
           </div>
           <div class="glass-card">
-            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Bookings</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+              Total Bookings</div>
             <div style="font-size: 1.8rem; font-weight: 800; color: #60a5fa;" id="kpi-bookings">0</div>
             <div style="font-size: 0.7rem; color: var(--text-muted);" id="kpi-pending">0 Pending Gate Arrival</div>
           </div>
           <div class="glass-card">
-            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Checked In</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+              Checked In</div>
             <div style="font-size: 1.8rem; font-weight: 800; color: #fbbf24;" id="kpi-checkedin">0</div>
             <div style="font-size: 0.7rem; color: var(--text-muted);">Active in Mandi Queue</div>
           </div>
           <div class="glass-card">
-            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Completed Procurements</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+              Completed Procurements</div>
             <div style="font-size: 1.8rem; font-weight: 800; color: #34d399;" id="kpi-completed">0</div>
             <div style="font-size: 0.7rem; color: var(--text-muted);">Receipts Issued</div>
           </div>
           <div class="glass-card">
-            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Procured (Q)</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+              Total Procured (Q)</div>
             <div style="font-size: 1.8rem; font-weight: 800; color: #ffffff;" id="kpi-procured-q">0.0</div>
             <div style="font-size: 0.7rem; color: var(--text-muted);">Quintals in Godowns</div>
           </div>
           <div class="glass-card">
-            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total DBT Payout</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+              Total DBT Payout</div>
             <div style="font-size: 1.8rem; font-weight: 800; color: #34d399;" id="kpi-payout-cr">₹0.00 Cr</div>
             <div style="font-size: 0.7rem; color: var(--text-muted);">Disbursed to Farmers</div>
           </div>
@@ -680,8 +807,10 @@
 
         <!-- Per-Center PACS Cards with Storage Bars (FR25) -->
         <div style="margin-bottom: 2rem;">
-          <h3 style="font-size: 1.25rem; color: #ffffff; margin-bottom: 1rem;">PACS Center Storage Utilization & Admission Status</h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem;" id="admin-centers-grid">
+          <h3 style="font-size: 1.25rem; color: #ffffff; margin-bottom: 1rem;">PACS Center Storage Utilization &
+            Admission Status</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem;"
+            id="admin-centers-grid">
             <!-- Dynamically populated PACS Center cards -->
           </div>
         </div>
@@ -699,8 +828,9 @@
 
         <!-- System Intelligence Panel (FR28) -->
         <div>
-          <h3 style="font-size: 1.25rem; color: #ffffff; margin-bottom: 1rem;">🧠 System Intelligence & Engine Audits</h3>
-          
+          <h3 style="font-size: 1.25rem; color: #ffffff; margin-bottom: 1rem;">🧠 System Intelligence & Engine Audits
+          </h3>
+
           <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
             <button class="btn btn-sm btn-primary intel-tab" data-intel="queue">Queue Intelligence</button>
             <button class="btn btn-sm btn-secondary intel-tab" data-intel="storage">Storage Intelligence</button>
@@ -725,7 +855,8 @@
         <div style="text-align: center; max-width: 600px; margin: 0 auto 2rem auto;">
           <h2 style="font-size: 1.6rem; color: #ffffff;">📞 हिंदी वॉइस / फीचर फोन आईवीआर सिम्युलेटर</h2>
           <p style="font-size: 0.875rem; color: var(--text-muted);">
-            Non-smartphone and low-literacy farmers can register and book guaranteed procurement slots via interactive conversational voice in Hindi.
+            Non-smartphone and low-literacy farmers can register and book guaranteed procurement slots via interactive
+            conversational voice in Hindi.
           </p>
         </div>
 
@@ -733,7 +864,8 @@
         <div class="phone-mockup">
           <!-- Screen -->
           <div class="phone-screen" id="ivr-screen">
-            <div style="font-size: 0.75rem; border-bottom: 1px dashed #065f46; padding-bottom: 0.35rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+            <div
+              style="font-size: 0.75rem; border-bottom: 1px dashed #065f46; padding-bottom: 0.35rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
               <span>e-KISAN IVR 1800-XXX</span>
               <span id="ivr-step-badge">STEP 1/4</span>
             </div>
@@ -784,13 +916,18 @@
   <!-- ========================================================================= -->
   <!-- ELECTRONIC PROCUREMENT RECEIPT MODAL (PRINTABLE) -->
   <!-- ========================================================================= -->
-  <div id="receipt-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center; padding: 1rem;">
-    <div class="glass-panel" style="background: #ffffff; color: #000000; max-width: 600px; width: 100%; border-radius: 16px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); position: relative;">
-      <button onclick="document.getElementById('receipt-modal').style.display='none'" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">✕</button>
-      
+  <div id="receipt-modal"
+    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 10000; align-items: center; justify-content: center; padding: 1rem;">
+    <div class="glass-panel"
+      style="background: #ffffff; color: #000000; max-width: 600px; width: 100%; border-radius: 16px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); position: relative;">
+      <button onclick="document.getElementById('receipt-modal').style.display='none'"
+        style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">✕</button>
+
       <div id="printable-receipt-content" class="receipt-print-area">
         <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 1rem; margin-bottom: 1rem;">
-          <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #059669;">GOVERNMENT OF UTTAR PRADESH</div>
+          <div
+            style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #059669;">
+            GOVERNMENT OF UTTAR PRADESH</div>
           <h2 style="font-size: 1.4rem; font-weight: 800; margin: 0.25rem 0;">DEPARTMENT OF FOOD & CIVIL SUPPLIES</h2>
           <div style="font-size: 0.85rem; font-weight: 600;">Official Electronic Procurement & Payment Receipt</div>
         </div>
@@ -804,11 +941,13 @@
           <div style="text-align: right;">
             <div><strong>PACS Center:</strong> <span id="rec-center">Rampur PACS Center</span></div>
             <div><strong>District:</strong> Varanasi</div>
-            <div><strong>Payment Status:</strong> <span style="color: #059669; font-weight: 700;">DISPATCHED (DBT)</span></div>
+            <div><strong>Payment Status:</strong> <span style="color: #059669; font-weight: 700;">DISPATCHED
+                (DBT)</span></div>
           </div>
         </div>
 
-        <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; background: #f8fafc; font-size: 0.85rem;">
+        <div
+          style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; background: #f8fafc; font-size: 0.85rem;">
           <div><strong>Farmer Name:</strong> <span id="rec-farmer">Anita Devi</span></div>
           <div><strong>Farmer Mobile:</strong> <span id="rec-phone">9876543213</span></div>
           <div><strong>Crop Procured:</strong> <span id="rec-crop">Wheat (Grade A)</span></div>
@@ -828,7 +967,8 @@
               <td style="padding: 0.5rem 0.4rem;" id="rec-table-desc">Wheat Fair Average Quality (FAQ)</td>
               <td style="padding: 0.5rem 0.4rem; text-align: right;" id="rec-table-weight">36.0 Q</td>
               <td style="padding: 0.5rem 0.4rem; text-align: right;" id="rec-table-rate">₹2,275</td>
-              <td style="padding: 0.5rem 0.4rem; text-align: right; font-weight: 600;" id="rec-table-gross">₹81,900.00</td>
+              <td style="padding: 0.5rem 0.4rem; text-align: right; font-weight: 600;" id="rec-table-gross">₹81,900.00
+              </td>
             </tr>
             <tr style="border-bottom: 1px solid #e2e8f0; color: #64748b;">
               <td style="padding: 0.4rem;" colspan="3">Quality Deductions (Refraction):</td>
@@ -847,7 +987,8 @@
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-          <button class="btn btn-secondary btn-sm" onclick="window.print()" style="background: #000000; color: #ffffff;">
+          <button class="btn btn-secondary btn-sm" onclick="window.print()"
+            style="background: #000000; color: #ffffff;">
             🖨️ Print Receipt
           </button>
         </div>
@@ -859,4 +1000,5 @@
   <script src="/static/js/offline.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
+
 </html>

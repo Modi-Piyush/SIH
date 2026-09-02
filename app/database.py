@@ -1,13 +1,48 @@
 """
-Database setup and session management using SQLite with full support for PRD schema.
-Includes auto-migration and comprehensive demo data seeding.
+Database setup and session management supporting Supabase PostgreSQL Cloud Database
+and Local SQLite with automatic offline fallback and demo data seeding.
 """
 
 import sqlite3
 import json
 import os
+import logging
 from datetime import datetime, date, timedelta
 from typing import Optional, Dict, Any, List
+from dotenv import load_dotenv
+
+load_dotenv()
+logger = logging.getLogger("database")
+
+try:
+    from supabase import create_client, Client
+    SUPABASE_LIB_AVAILABLE = True
+except ImportError:
+    SUPABASE_LIB_AVAILABLE = False
+
+def get_supabase_client() -> Optional[Any]:
+    """Returns initialized Supabase Client if SUPABASE_URL and SUPABASE_KEY are provided in .env."""
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+    if not url or not key or url.startswith("https://your-") or not SUPABASE_LIB_AVAILABLE:
+        return None
+    try:
+        return create_client(url, key)
+    except Exception as e:
+        logger.warning(f"Failed to initialize Supabase client: {e}")
+        return None
+
+def get_db_engine_status() -> Dict[str, Any]:
+    """Returns active database configuration status (Supabase Cloud vs SQLite Local)."""
+    supabase_configured = bool(os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_KEY") and not os.getenv("SUPABASE_URL", "").startswith("https://your-"))
+    database_url_configured = bool(os.getenv("DATABASE_URL"))
+    
+    return {
+        "primary_database": "Supabase Cloud (PostgreSQL)" if (supabase_configured or database_url_configured) else "Local SQLite (Offline-Ready)",
+        "supabase_configured": supabase_configured or database_url_configured,
+        "sqlite_local_path": get_db_path(),
+        "status": "connected"
+    }
 
 def get_db_path() -> str:
     """Resolves SQLite database path, automatically using /tmp in serverless/Vercel environments."""

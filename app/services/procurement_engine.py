@@ -154,17 +154,57 @@ def validate_weighment_tolerance(estimated_weight_q: float, actual_net_weight_q:
         "message": "Weighment within normal ±15% tolerance." if not mismatch else f"Warning: Weight deviation of {deviation:+.1f}% exceeds ±15% threshold."
     }
 
-def calculate_payment_breakdown(crop_name: str, final_weight_q: float, quality_grade: str) -> Dict[str, Any]:
+def calculate_payment_breakdown(
+    crop_name: str,
+    final_weight_q: float,
+    quality_grade: str,
+    moisture_percentage: float = 12.5,
+    foreign_matter_percentage: float = 0.5,
+    discoloration_percentage: float = 1.0
+) -> Dict[str, Any]:
     """
-    Calculates procurement payment breakdown with MSP rate, gross amount, quality deduction (if Grade B), and net amount.
+    Calculates official procurement payment breakdown according to Government FAQ (Fair Average Quality) Refraction Norms:
+    - Base MSP Gross Amount
+    - Quality Refraction Cuts:
+        * Moisture Cut: 0% for <=14.0%, 0.75% for 14.1%-15.0%, 1.5% for 15.1%-16.5%
+        * Foreign Matter Cut: 0% for <=0.75%, proportional deduction for >0.75%
+        * Discoloration Cut: 0.5% if >2.0%
+        * Minimum 1.5% deduction for Grade B
+    - Net DBT Payable to Farmer
     """
     msp_rate = CROP_MSP_RATES.get(crop_name, 2275.0)
     gross_amount = round(final_weight_q * msp_rate, 2)
-    
-    # Grade B has standard minor moisture refraction deduction (e.g. 1.5%), Grade A has 0% deduction
-    deduction_rate = 0.015 if quality_grade == "B" else 0.0
-    quality_deductions = round(gross_amount * deduction_rate, 2)
-    net_payable = round(gross_amount - quality_deductions, 2)
+
+    # 1. Moisture Refraction Cut (FCI Standard)
+    if moisture_percentage <= 14.0:
+        moisture_cut_pct = 0.0
+    elif moisture_percentage <= 15.0:
+        moisture_cut_pct = 0.0075  # 0.75%
+    elif moisture_percentage <= 16.5:
+        moisture_cut_pct = 0.015   # 1.5%
+    else:
+        moisture_cut_pct = 0.03    # 3.0% if accepted with override
+
+    # 2. Foreign Matter Cut (> 0.75%)
+    if foreign_matter_percentage > 0.75:
+        foreign_cut_pct = min(0.05, round((foreign_matter_percentage - 0.75) / 100.0, 4))
+    else:
+        foreign_cut_pct = 0.0
+
+    # 3. Discoloration Cut (> 2.0%)
+    if discoloration_percentage > 2.0:
+        discolor_cut_pct = 0.005  # 0.5%
+    else:
+        discolor_cut_pct = 0.0
+
+    # Total refraction percentage
+    total_refraction_pct = moisture_cut_pct + foreign_cut_pct + discolor_cut_pct
+    if quality_grade == "B" and total_refraction_pct < 0.015:
+        total_refraction_pct = 0.015  # Minimum 1.5% deduction for Grade B
+
+    quality_deductions = round(gross_amount * total_refraction_pct, 2)
+    net_payable = round(max(0.0, gross_amount - quality_deductions), 2)
+    effective_rate = round(net_payable / final_weight_q, 2) if final_weight_q > 0 else msp_rate
 
     return {
         "crop_name": crop_name,
@@ -172,6 +212,12 @@ def calculate_payment_breakdown(crop_name: str, final_weight_q: float, quality_g
         "msp_rate_per_q": msp_rate,
         "gross_amount": gross_amount,
         "quality_grade": quality_grade,
+        "moisture_percentage": moisture_percentage,
+        "moisture_cut_amount": round(gross_amount * moisture_cut_pct, 2),
+        "foreign_matter_cut_amount": round(gross_amount * foreign_cut_pct, 2),
+        "discoloration_cut_amount": round(gross_amount * discolor_cut_pct, 2),
+        "total_refraction_percentage": round(total_refraction_pct * 100, 2),
         "quality_deductions": quality_deductions,
-        "net_payable_amount": net_payable
+        "net_payable_amount": net_payable,
+        "effective_rate_per_q": effective_rate
     }

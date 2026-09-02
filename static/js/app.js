@@ -130,7 +130,7 @@ function showToast(title, message, type = 'info') {
 function setLanguage(lang) {
   state.currentLang = lang;
   document.getElementById('current-lang-text').innerText = lang === 'en' ? 'हिन्दी' : 'English';
-  
+
   const dict = i18n[lang];
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
@@ -138,7 +138,7 @@ function setLanguage(lang) {
       el.innerText = dict[key];
     }
   });
-  
+
   document.getElementById('app-title').innerText = dict.app_title;
   document.getElementById('app-subtitle').innerText = dict.app_subtitle;
 }
@@ -594,6 +594,20 @@ function setupBookingForm() {
   });
 }
 
+function openTokenDetailModal(tokenCode) {
+  // Navigate directly to Track Token in Farmer Portal and fetch token
+  const farmerTab = document.getElementById('tab-farmer');
+  if (farmerTab) farmerTab.click();
+
+  const trackSubTab = document.querySelector('[data-subtarget="farmer-track"]');
+  if (trackSubTab) trackSubTab.click();
+
+  const input = document.getElementById('track-token-input');
+  if (input) input.value = tokenCode;
+
+  fetchAndDisplayToken(tokenCode);
+}
+
 async function fetchAndDisplayToken(tokenCode) {
   try {
     const res = await fetch(`/api/farmer/tokens/${tokenCode}`);
@@ -791,7 +805,7 @@ function renderPreScreenResult(res) {
 // -----------------------------------------------------------------------------
 async function loadFarmerHistory() {
   const phone = document.getElementById('book-phone').value.trim() || '9876543210';
-  
+
   try {
     // 1. Fetch SMS Notifications
     const noteRes = await fetch(`/api/farmer/notifications/${phone}`);
@@ -809,7 +823,7 @@ async function loadFarmerHistory() {
         item.innerHTML = `
           <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.25rem;">
             <strong>${n.title}</strong>
-            <span>${new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            <span>${new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
           <div style="font-size:0.8rem; color:#ffffff;">${n.message}</div>
         `;
@@ -921,7 +935,7 @@ async function verifyGuardToken(tokenCode) {
   if (booking.can_check_in || booking.status === 'CONFIRMED') {
     actionBox.style.display = 'block';
     document.getElementById('guard-tractor-input').value = booking.tractor_number || 'UP-65-AB-1234';
-    
+
     document.getElementById('btn-gate-checkin').onclick = () => executeGateCheckIn(booking.token_code);
   } else {
     actionBox.style.display = 'none';
@@ -1009,45 +1023,168 @@ function setupGuardEvents() {
 // -----------------------------------------------------------------------------
 // 5. MANDI CLERK & QUALITY INSPECTOR LOGIC
 // -----------------------------------------------------------------------------
-async function loadClerkQueue() {
-  const centerId = document.getElementById('clerk-center-select').value;
+let allClerkSlotsCache = [];
+
+async function loadClerkQueue(showFeedback = false) {
+  const centerSelect = document.getElementById('clerk-center-select');
+  const centerId = (centerSelect && centerSelect.value) ? centerSelect.value : 'ALL';
+  const refreshBtn = document.getElementById('btn-refresh-clerk-queue');
+  
+  if (refreshBtn) {
+    refreshBtn.disabled = true;
+    refreshBtn.innerText = '⏳ Syncing...';
+  }
+
   try {
     const res = await fetch(`/api/clerk/queue/${centerId}`);
+    if (!res.ok) {
+      console.error('Clerk queue fetch failed:', res.status);
+      showToast('Sync Error', 'Could not retrieve latest PACS queue data.', 'danger');
+      return;
+    }
     const queue = await res.json();
+    allClerkSlotsCache = queue;
     renderClerkQueue(queue);
+
+    if (showFeedback) {
+      showToast('Pipeline Synced', `Loaded ${queue.length} tokens for ${centerId === 'ALL' ? 'All Centers' : 'Selected PACS'}.`, 'safe');
+    }
   } catch (err) {
     console.error('Clerk queue error:', err);
+    showToast('Sync Error', 'Database connection error.', 'danger');
+  } finally {
+    if (refreshBtn) {
+      refreshBtn.disabled = false;
+      refreshBtn.innerText = '🔄 Refresh Pipeline';
+    }
   }
 }
 
 function renderClerkQueue(queue) {
-  const tbody = document.getElementById('clerk-queue-table-body');
-  tbody.innerHTML = '';
+  const activeTbody = document.getElementById('clerk-queue-table-body');
+  const historyTbody = document.getElementById('clerk-history-table-body');
+  const searchInput = document.getElementById('clerk-search-input');
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-  if (!queue.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="padding: 1.5rem; text-align: center; color: var(--text-dim);">No checked-in farmers waiting in queue for this center.</td></tr>`;
-    return;
+  if (activeTbody) activeTbody.innerHTML = '';
+  if (historyTbody) historyTbody.innerHTML = '';
+
+  let filtered = queue;
+  if (query) {
+    filtered = queue.filter(s => 
+      (s.token_code && s.token_code.toLowerCase().includes(query)) ||
+      (s.farmer_name && s.farmer_name.toLowerCase().includes(query)) ||
+      (s.farmer_phone && s.farmer_phone.toLowerCase().includes(query)) ||
+      (s.crop_name && s.crop_name.toLowerCase().includes(query)) ||
+      (s.receipt_number && s.receipt_number.toLowerCase().includes(query)) ||
+      (s.center_name && s.center_name.toLowerCase().includes(query))
+    );
   }
 
-  queue.forEach((s) => {
-    const row = document.createElement('tr');
-    row.style.borderBottom = '1px solid var(--border)';
-    row.innerHTML = `
-      <td style="padding: 0.75rem; font-weight: 700; color: #ffffff;">${s.token_code}</td>
-      <td style="padding: 0.75rem;">${s.farmer_name}</td>
-      <td style="padding: 0.75rem;"><span class="badge badge-info">${s.crop_name}</span></td>
-      <td style="padding: 0.75rem; font-weight: 600;">${s.allocated_weight_q} Q</td>
-      <td style="padding: 0.75rem; color: var(--text-muted);">${s.arrival_window_start} - ${s.arrival_window_end}</td>
-      <td style="padding: 0.75rem;">${s.tractor_number || 'UP-65-XX'}</td>
-      <td style="padding: 0.75rem;"><span class="badge badge-warning">${s.status}</span></td>
-      <td style="padding: 0.75rem;">
-        <button class="btn btn-primary btn-sm" onclick='openClerkInspectionModal(${JSON.stringify(s)})'>
-          🔍 Inspect & Weigh
-        </button>
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
+  const activeSlots = filtered.filter(s => s.status !== 'PAYMENT_DISPATCHED' && s.status !== 'FULFILLED');
+  const completedSlots = filtered.filter(s => s.status === 'PAYMENT_DISPATCHED' || s.status === 'FULFILLED');
+
+  const activeCountEl = document.getElementById('clerk-active-count');
+  if (activeCountEl) activeCountEl.innerText = `${activeSlots.length} ACTIVE`;
+
+  const historyCountEl = document.getElementById('clerk-history-count');
+  if (historyCountEl) historyCountEl.innerText = `${completedSlots.length} COMPLETED`;
+
+  // 1. Render Active Queue
+  if (activeTbody) {
+    if (!activeSlots.length) {
+      activeTbody.innerHTML = `<tr><td colspan="7" style="padding: 1.5rem; text-align: center; color: var(--text-dim);">No active farmer deliveries waiting in queue.</td></tr>`;
+    } else {
+      activeSlots.forEach((s) => {
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid var(--border)';
+        row.innerHTML = `
+          <td style="padding: 0.75rem; font-weight: 700; color: #ffffff; font-family: var(--font-mono);">
+            ${s.token_code}
+            <button class="btn btn-secondary btn-sm" onclick="openTokenDetailModal('${s.token_code}')" style="padding: 0.15rem 0.4rem; font-size: 0.65rem; margin-left: 0.35rem;" title="View Token Details">🎫</button>
+          </td>
+          <td style="padding: 0.75rem;">
+            <strong>${s.farmer_name}</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${s.center_name || 'Rampur PACS'} • ${s.farmer_phone}</div>
+          </td>
+          <td style="padding: 0.75rem;">
+            <span class="badge badge-info">${s.crop_name}</span>
+            <span style="font-weight: 600; font-size: 0.85rem; margin-left: 0.3rem;">${s.allocated_weight_q} Q</span>
+          </td>
+          <td style="padding: 0.75rem; color: var(--text-muted); font-size: 0.85rem;">
+            ${s.scheduled_date || 'Today'} • ${s.arrival_window_start || '08:00'} - ${s.arrival_window_end || '10:00'}
+          </td>
+          <td style="padding: 0.75rem; font-family: var(--font-mono); font-size: 0.85rem;">${s.tractor_number || 'UP-65-AB-1234'}</td>
+          <td style="padding: 0.75rem;">
+            <span class="badge ${s.status === 'CHECKED_IN' ? 'badge-safe' : 'badge-warning'}">${s.status}</span>
+          </td>
+          <td style="padding: 0.75rem;">
+            <button class="btn btn-primary btn-sm" onclick='openClerkInspectionModal(${JSON.stringify(s)})'>
+              🔍 Inspect & Weigh
+            </button>
+          </td>
+        `;
+        activeTbody.appendChild(row);
+      });
+    }
+  }
+
+  // 2. Render Completed History & DBT Dispatches Table
+  if (historyTbody) {
+    if (!completedSlots.length) {
+      historyTbody.innerHTML = `<tr><td colspan="7" style="padding: 1.5rem; text-align: center; color: var(--text-dim);">No completed procurements recorded yet.</td></tr>`;
+    } else {
+      completedSlots.forEach((s) => {
+        const netAmt = s.net_payable_amount ? `₹${parseFloat(s.net_payable_amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}` : '₹0.00';
+        const recNo = s.receipt_number || 'REC-PENDING';
+        
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid var(--border)';
+        row.innerHTML = `
+          <td style="padding: 0.75rem; font-weight: 700; color: #ffffff; font-family: var(--font-mono);">${s.token_code}</td>
+          <td style="padding: 0.75rem;">
+            <strong>${s.farmer_name}</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${s.center_name || 'Rampur PACS'} • ${s.farmer_phone}</div>
+          </td>
+          <td style="padding: 0.75rem;">
+            <span class="badge badge-info">${s.crop_name}</span>
+            <span style="font-weight: 700; font-size: 0.85rem; margin-left: 0.3rem;">${s.allocated_weight_q} Q</span>
+          </td>
+          <td style="padding: 0.75rem; font-weight: 800; color: #34d399; font-size: 0.95rem;">${netAmt}</td>
+          <td style="padding: 0.75rem; font-family: var(--font-mono); font-size: 0.85rem; color: #94a3b8;">${recNo}</td>
+          <td style="padding: 0.75rem;"><span class="badge badge-safe">DISPATCHED</span></td>
+          <td style="padding: 0.75rem; display: flex; gap: 0.35rem; align-items: center;">
+            <button class="btn btn-secondary btn-sm" onclick="openTokenDetailModal('${s.token_code}')" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+              🎫 View Token
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="viewReceiptByToken('${s.token_code}')" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: linear-gradient(135deg, #059669, #047857);">
+              🧾 View Receipt
+            </button>
+          </td>
+        `;
+        historyTbody.appendChild(row);
+      });
+    }
+  }
+}
+
+async function viewReceiptByToken(tokenCode) {
+  try {
+    const res = await fetch(`/api/farmer/tokens/${tokenCode}`);
+    if (res.ok) {
+      const fullToken = await res.json();
+      if (fullToken.receipt) {
+        showReceiptModal(fullToken);
+      } else {
+        showToast('Receipt Pending', 'Receipt is being finalized by bank DBT network.', 'info');
+      }
+    } else {
+      showToast('Error', 'Could not load receipt details.', 'danger');
+    }
+  } catch (err) {
+    console.error('View receipt error:', err);
+    showToast('Error', 'Failed to retrieve receipt.', 'danger');
+  }
 }
 
 function openClerkInspectionModal(slot) {
@@ -1057,13 +1194,13 @@ function openClerkInspectionModal(slot) {
 
   document.getElementById('clerk-active-token').innerText = slot.token_code;
   document.getElementById('clerk-farmer-name').innerText = `${slot.farmer_name} - ${slot.crop_name} (${slot.allocated_weight_q} Q)`;
-  
+
   // Set default gross & tare
   const alloc = slot.allocated_weight_q || 32.0;
   document.getElementById('clerk-gross-weight').value = alloc + 20.0;
   document.getElementById('clerk-tare-weight').value = 20.0;
   document.getElementById('clerk-estimated-weight-text').innerText = `${alloc} Q`;
-  
+
   calculateClerkNetWeight();
 
   // Scroll to panel
@@ -1079,7 +1216,7 @@ function calculateClerkNetWeight() {
 
   const slot = state.activeClerkSlot;
   const estimated = slot ? slot.allocated_weight_q : net;
-  
+
   const dev = estimated > 0 ? (((net - estimated) / estimated) * 100).toFixed(1) : 0;
   const isMismatch = Math.abs(dev) > 15.0;
 
@@ -1103,7 +1240,7 @@ async function executeClerkAcceptFulfill() {
   const discolor = parseFloat(document.getElementById('clerk-discolor').value);
   const foreign = parseFloat(document.getElementById('clerk-foreign').value);
   const broken = parseFloat(document.getElementById('clerk-broken').value);
-  
+
   const isOverride = document.getElementById('clerk-override-toggle').checked;
   const overrideGrade = document.getElementById('clerk-override-grade').value;
   const overrideReason = document.getElementById('clerk-override-reason').value;
@@ -1140,8 +1277,13 @@ async function executeClerkAcceptFulfill() {
 
     showToast('Procurement Fulfilled!', `Receipt ${data.receipt_number} generated. Payout ₹${data.payment_breakdown.net_payable_amount.toLocaleString('en-IN')} dispatched.`, 'safe');
     document.getElementById('clerk-inspection-panel').style.display = 'none';
-    loadClerkQueue();
+    
+    // Refresh Clerk Queue and Procurement Centers
+    await loadClerkQueue(false);
     loadProcurementCenters();
+
+    // Automatically open the Official Electronic Receipt Modal on its own!
+    await viewReceiptByToken(slot.token_code);
 
   } catch (err) {
     console.error('Accept fulfill error:', err);
@@ -1177,12 +1319,26 @@ async function triggerClerkReject() {
 }
 
 function setupClerkEvents() {
-  document.getElementById('clerk-center-select').addEventListener('change', loadClerkQueue);
-  document.getElementById('btn-refresh-clerk-queue').addEventListener('click', loadClerkQueue);
+  const centerSelect = document.getElementById('clerk-center-select');
+  if (centerSelect) centerSelect.addEventListener('change', () => loadClerkQueue(false));
 
-  document.getElementById('clerk-override-toggle').addEventListener('change', (e) => {
-    document.getElementById('clerk-override-box').style.display = e.target.checked ? 'block' : 'none';
-  });
+  const refreshBtn = document.getElementById('btn-refresh-clerk-queue');
+  if (refreshBtn) refreshBtn.addEventListener('click', () => loadClerkQueue(true));
+
+  const searchInput = document.getElementById('clerk-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      renderClerkQueue(allClerkSlotsCache);
+    });
+  }
+
+  const overrideToggle = document.getElementById('clerk-override-toggle');
+  if (overrideToggle) {
+    overrideToggle.addEventListener('change', (e) => {
+      const box = document.getElementById('clerk-override-box');
+      if (box) box.style.display = e.target.checked ? 'block' : 'none';
+    });
+  }
 }
 
 // -----------------------------------------------------------------------------

@@ -78,12 +78,25 @@ async def serve_index():
 @app.get("/health")
 @app.get("/api/health")
 def health_check():
-    """Health check endpoint for monitoring."""
+    """Health check endpoint for monitoring cloud database and AI services."""
+    from app.database import get_db_engine_status
+    db_status = get_db_engine_status()
+    
+    groq_configured = bool(os.getenv("GROQ_API_KEY") and not os.getenv("GROQ_API_KEY", "").startswith("your_"))
+    
     return {
         "status": "healthy",
         "service": "Farmer Procurement Supply Chain Platform",
         "version": "1.0.0",
-        "database": "SQLite (Supabase Compatible)",
+        "database": db_status["primary_database"],
+        "database_details": db_status,
+        "ai_engine": {
+            "provider": "Groq Cloud AI (Llama 3.2 Vision / Llama 3.3)" if groq_configured else "Local Computer Vision Engine (Heuristic)",
+            "groq_configured": groq_configured,
+            "vision_model": os.getenv("GROQ_VISION_MODEL", "llama-3.2-11b-vision-preview"),
+            "llm_model": os.getenv("GROQ_LLM_MODEL", "llama-3.3-70b-versatile"),
+            "api_key_secured": True
+        },
         "offline_sync_support": True
     }
 

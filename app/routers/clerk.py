@@ -40,18 +40,56 @@ class RejectCropRequest(BaseModel):
     inspector_notes: Optional[str] = None
 
 @router.get("/queue/{center_id}")
-def get_checked_in_queue(center_id: int):
-    """Retrieves live queue of checked-in farmers waiting for quality inspection and weighment."""
+def get_checked_in_queue(center_id: str):
+    """Retrieves full scheduled, active, and fulfilled DBT pipeline for the PACS center (or all centers if 'ALL')."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-    SELECT s.*, u.name as farmer_name, u.phone as farmer_phone, u.village as farmer_village, u.farmer_category
-    FROM slots s
-    JOIN users u ON s.farmer_id = u.id
-    WHERE s.center_id = ? AND s.status IN ('CHECKED_IN', 'QUALITY_APPROVED', 'WEIGHMENT_COMPLETE')
-    ORDER BY s.id ASC
-    """, (center_id,))
+    if center_id in ("ALL", "all", "0", ""):
+        cursor.execute("""
+        SELECT s.*, u.name as farmer_name, u.phone as farmer_phone, u.village as farmer_village, u.farmer_category,
+               c.name as center_name, c.district as center_district,
+               r.receipt_number, r.net_payable_amount, r.gross_amount, r.quality_deductions, r.transaction_ref
+        FROM slots s
+        JOIN users u ON s.farmer_id = u.id
+        JOIN procurement_centers c ON s.center_id = c.id
+        LEFT JOIN procurement_receipts r ON s.id = r.slot_id
+        ORDER BY 
+            CASE s.status
+                WHEN 'CHECKED_IN' THEN 1
+                WHEN 'QUALITY_APPROVED' THEN 2
+                WHEN 'WEIGHMENT_COMPLETE' THEN 3
+                WHEN 'CONFIRMED' THEN 4
+                WHEN 'PAYMENT_DISPATCHED' THEN 5
+                ELSE 6
+            END,
+            s.scheduled_date ASC, s.arrival_window_start ASC, s.id ASC
+        """)
+    else:
+        try:
+            cid = int(center_id)
+        except ValueError:
+            cid = 1
+        cursor.execute("""
+        SELECT s.*, u.name as farmer_name, u.phone as farmer_phone, u.village as farmer_village, u.farmer_category,
+               c.name as center_name, c.district as center_district,
+               r.receipt_number, r.net_payable_amount, r.gross_amount, r.quality_deductions, r.transaction_ref
+        FROM slots s
+        JOIN users u ON s.farmer_id = u.id
+        JOIN procurement_centers c ON s.center_id = c.id
+        LEFT JOIN procurement_receipts r ON s.id = r.slot_id
+        WHERE s.center_id = ?
+        ORDER BY 
+            CASE s.status
+                WHEN 'CHECKED_IN' THEN 1
+                WHEN 'QUALITY_APPROVED' THEN 2
+                WHEN 'WEIGHMENT_COMPLETE' THEN 3
+                WHEN 'CONFIRMED' THEN 4
+                WHEN 'PAYMENT_DISPATCHED' THEN 5
+                ELSE 6
+            END,
+            s.scheduled_date ASC, s.arrival_window_start ASC, s.id ASC
+        """, (cid,))
     rows = cursor.fetchall()
     conn.close()
 
@@ -81,6 +119,26 @@ async def inspect_crop_sample(
         analysis["token_code"] = token_code
 
     return analysis
+
+class PayoutPreviewRequest(BaseModel):
+    crop_name: str
+    net_weight_q: float
+    quality_grade: str
+    moisture_percentage: float = 12.5
+    foreign_matter_percentage: float = 0.5
+    discoloration_percentage: float = 1.0
+
+@router.post("/calculate-payout")
+def calculate_payout_preview(req: PayoutPreviewRequest):
+    """Provides instant real-time calculation of gross MSP, government quality deductions, and net DBT disbursement."""
+    return calculate_payment_breakdown(
+        crop_name=req.crop_name,
+        final_weight_q=req.net_weight_q,
+        quality_grade=req.quality_grade,
+        moisture_percentage=req.moisture_percentage,
+        foreign_matter_percentage=req.foreign_matter_percentage,
+        discoloration_percentage=req.discoloration_percentage
+    )
 
 @router.post("/validate-weighment")
 def validate_weighment_preview(
@@ -181,8 +239,15 @@ def accept_crop_and_fulfill(req: AcceptAndFulfillRequest):
         1 if tolerance_info["is_mismatch_flagged"] else 0, req.weighbridge_operator
     ))
 
-    # 5. Calculate Payment Breakdown
-    pay_calc = calculate_payment_breakdown(slot["crop_name"], net_weight_q, req.final_grade)
+    # 5. Calculate Payment Breakdown with Government Quality Refraction Cuts
+    pay_calc = calculate_payment_breakdown(
+        crop_name=slot["crop_name"],
+        final_weight_q=net_weight_q,
+        quality_grade=req.final_grade,
+        moisture_percentage=req.moisture_percentage,
+        foreign_matter_percentage=req.foreign_matter_percentage,
+        discoloration_percentage=req.discoloration_percentage
+    )
     receipt_no = f"REC-{random.randint(10000, 99999)}"
     txn_ref = f"TXN-DBT-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
 

@@ -1,17 +1,141 @@
 """
 Voice Router: Hindi IVR & Feature-Phone Dialogue Simulator.
-Allows low-literacy and non-smartphone farmers to register and book slots
-through conversational Hindi voice or keypad simulation.
+Supports Groq Whisper-Large-v3 Speech-to-Text, Groq Llama-3.3 Conversational Agent,
+with 100% Free-Tier Graceful Degradation & Interactive DTMF Keypad Fallback.
 """
 
+import os
+import json
+import logging
+import tempfile
 from typing import Dict, Any, Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv()
+logger = logging.getLogger("voice")
+
+try:
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
 
 from app.services.procurement_engine import calculate_crop_weight, is_small_farmer
 from app.routers.farmer import book_slot, BookSlotRequest, register_or_login, FarmerRegisterRequest
 
 router = APIRouter(prefix="/voice", tags=["Hindi Voice IVR"])
+
+class AISpeechRequest(BaseModel):
+    session_id: str
+    spoken_text: str
+    phone: Optional[str] = "9876543210"
+    farmer_name: Optional[str] = "रामेश कुमार"
+    village: Optional[str] = "रामपुर कलां"
+    current_crop: Optional[str] = "Wheat"
+    current_acres: Optional[float] = 3.5
+
+@router.post("/process-ai-speech")
+async def process_ai_speech(req: AISpeechRequest):
+    """
+    Processes spoken Hindi/English text using Groq Llama-3.3 Conversational Agent.
+    Gracefully falls back to Keypad mode if rate limits are reached or API key is absent.
+    """
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if not groq_api_key or not GROQ_AVAILABLE or groq_api_key.startswith("your_"):
+        return {
+            "status": "fallback_keypad",
+            "reason": "Groq AI key not configured. Using standard DTMF Phone Keypad mode.",
+            "prompt_hindi": "कीपैड मोड सक्रिय है। कृपया फसल और रकबा चुनने के लिए नंबर दबाएं।",
+            "prompt_english": "Keypad mode active. Please press numeric keys to select options.",
+            "recognized_text": req.spoken_text
+        }
+
+    try:
+        client = Groq(api_key=groq_api_key)
+        model = os.getenv("GROQ_LLM_MODEL", "llama-3.3-70b-versatile")
+
+        prompt = f"""You are an Indian Government Kisan e-Procurement Voice Assistant (किसान ई-खरीद सेवा).
+The farmer said: "{req.spoken_text}"
+Current context: Crop={req.current_crop}, Acres={req.current_acres}, Phone={req.phone}.
+
+Extract the farmer's intent:
+1. crop_name (Wheat, Paddy, Chana, Tur, Maize, Mustard, Moong, etc. - default to {req.current_crop} if not mentioned)
+2. land_acres (number in acres - default to {req.current_acres})
+3. center_id (1 for Rampur, 2 for Bilaspur, 3 for Sitapur, 4 for Kalyanpur - default to 1)
+4. action ("BOOK_SLOT" if farmer wants to book, "INQUIRE" if asking for info)
+5. spoken_reply_hindi (a warm, respectful, concise confirmation message in simple Hindi with details)
+6. spoken_reply_english (English translation)
+
+Respond ONLY with valid JSON:
+{{
+  "crop_name": "Wheat",
+  "land_acres": 3.5,
+  "center_id": 1,
+  "action": "BOOK_SLOT",
+  "spoken_reply_hindi": "नमस्ते! आपका 3.5 एकड़ गेहूं का स्लॉट रामपुर पैक्स में दर्ज किया जा रहा है।",
+  "spoken_reply_english": "Your booking for 3.5 acres wheat at Rampur PACS is being processed."
+}}"""
+
+        resp = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"},
+            temperature=0.1,
+            max_tokens=400
+        )
+
+        parsed = json.loads(resp.choices[0].message.content)
+        crop = parsed.get("crop_name", req.current_crop or "Wheat")
+        acres = float(parsed.get("land_acres", req.current_acres or 3.5))
+        center_id = int(parsed.get("center_id", 1))
+
+        # Auto register/login & book slot
+        reg_res = register_or_login(FarmerRegisterRequest(
+            phone=req.phone,
+            name=req.farmer_name,
+            village=req.village,
+            land_acres=acres
+        ))
+
+        book_res = book_slot(BookSlotRequest(
+            phone=req.phone,
+            center_id=center_id,
+            crop_name=crop,
+            land_acres=acres,
+            weight_input_mode="ESTIMATE"
+        ))
+
+        token_code = book_res["primary_token"]
+        window = book_res["queue_info"]["window"]
+        center_name = book_res.get("queue_info", {}).get("center_name", "Rampur PACS Center")
+
+        hindi_reply = f"बधाई हो {req.farmer_name}! आपका {crop} ({acres} एकड़) का स्लॉट {center_name} में बुक हो गया है। आपका टोकन {token_code} है। आगमन समय {window} है। एसएमएस भेज दिया गया है।"
+        eng_reply = f"Booking confirmed! Token: {token_code}, Center: {center_name}, Window: {window}."
+
+        return {
+            "status": "success",
+            "ai_provider": f"Groq Cloud AI ({model})",
+            "recognized_text": req.spoken_text,
+            "crop_name": crop,
+            "land_acres": acres,
+            "token_code": token_code,
+            "arrival_window": window,
+            "prompt_hindi": hindi_reply,
+            "prompt_english": eng_reply,
+            "booking_details": book_res
+        }
+
+    except Exception as e:
+        logger.warning(f"Groq Voice LLM rate limit or error: {e}")
+        return {
+            "status": "fallback_keypad",
+            "reason": "AI Voice free tier limit reached or high traffic. Switched to phone keypad mode.",
+            "prompt_hindi": "क्षमा करें, वॉयस सेवा व्यस्त है। कीपैड द्वारा 1 से 4 दबाकर अपनी फसल चुनें।",
+            "prompt_english": "Voice service busy. Please use keypad to proceed.",
+            "recognized_text": req.spoken_text
+        }
 
 class IVRStepRequest(BaseModel):
     session_id: str
