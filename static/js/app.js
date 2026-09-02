@@ -1207,6 +1207,19 @@ function openClerkInspectionModal(slot) {
   panel.scrollIntoView({ behavior: 'smooth' });
 }
 
+const CLERK_MSP_TABLE = {
+  'Wheat': 2275.0,
+  'Paddy': 2183.0,
+  'Chana': 5440.0,
+  'Tur': 7000.0,
+  'Mustard': 5650.0,
+  'Maize': 2090.0,
+  'Moong': 8558.0,
+  'Urad': 6950.0,
+  'Soybean': 4600.0,
+  'Groundnut': 6377.0
+};
+
 function calculateClerkNetWeight() {
   const gross = parseFloat(document.getElementById('clerk-gross-weight').value) || 0;
   const tare = parseFloat(document.getElementById('clerk-tare-weight').value) || 0;
@@ -1228,6 +1241,55 @@ function calculateClerkNetWeight() {
     tolText.style.color = '#34d399';
     tolText.innerText = `${dev}% (Normal within ±15%)`;
   }
+
+  // Real-time MSP, Gross, Deductions, and Net DBT Payout Calculation
+  const crop = (slot && slot.crop_name) ? slot.crop_name : 'Wheat';
+  const mspRate = CLERK_MSP_TABLE[crop] || 2275.0;
+  
+  const moisture = parseFloat(document.getElementById('clerk-moisture').value) || 12.0;
+  const isOverride = document.getElementById('clerk-override-toggle').checked;
+  const overrideGrade = document.getElementById('clerk-override-grade').value;
+  const aiGrade = moisture < 14.5 ? 'A' : moisture <= 16.5 ? 'B' : 'REJECTED';
+  const finalGrade = isOverride ? overrideGrade : aiGrade;
+
+  const gradeBadge = document.getElementById('clerk-ai-grade-badge');
+  if (gradeBadge) {
+    gradeBadge.innerText = `Grade ${finalGrade}`;
+    gradeBadge.className = `badge ${finalGrade === 'A' ? 'badge-safe' : finalGrade === 'B' ? 'badge-warning' : 'badge-critical'}`;
+  }
+
+  const grossVal = net * mspRate;
+  let deductionRate = 0.0;
+  let deductionReason = 'Grade A: 0% deduction (Prime Quality)';
+
+  if (finalGrade === 'B') {
+    deductionRate = 0.01; // 1.0% standard moisture refraction
+    deductionReason = 'Grade B: -1.0% Standard Refraction deduction';
+  } else if (finalGrade === 'REJECTED') {
+    deductionRate = 1.0;
+    deductionReason = 'REJECTED: Moisture > 16.5% / Quality non-compliant';
+  }
+
+  const deductionVal = finalGrade === 'REJECTED' ? grossVal : (grossVal * deductionRate);
+  const netPayable = Math.max(0, grossVal - deductionVal);
+
+  const mspBadge = document.getElementById('clerk-msp-rate-badge');
+  if (mspBadge) mspBadge.innerText = `${crop} MSP: ₹${mspRate.toLocaleString('en-IN')} / Q`;
+
+  const grossEl = document.getElementById('clerk-calc-gross');
+  if (grossEl) grossEl.innerText = `₹${grossVal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+  const deductEl = document.getElementById('clerk-calc-deductions');
+  if (deductEl) deductEl.innerText = `-₹${deductionVal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+  const reasonEl = document.getElementById('clerk-deduction-reason');
+  if (reasonEl) reasonEl.innerText = deductionReason;
+
+  const netEl = document.getElementById('clerk-calc-net');
+  if (netEl) netEl.innerText = `₹${netPayable.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+  const btnAmount = document.getElementById('clerk-btn-amount');
+  if (btnAmount) btnAmount.innerText = `₹${netPayable.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 }
 
 async function executeClerkAcceptFulfill() {
@@ -1337,8 +1399,19 @@ function setupClerkEvents() {
     overrideToggle.addEventListener('change', (e) => {
       const box = document.getElementById('clerk-override-box');
       if (box) box.style.display = e.target.checked ? 'block' : 'none';
+      calculateClerkNetWeight();
     });
   }
+
+  const overrideGrade = document.getElementById('clerk-override-grade');
+  if (overrideGrade) {
+    overrideGrade.addEventListener('change', calculateClerkNetWeight);
+  }
+
+  ['clerk-moisture', 'clerk-discolor', 'clerk-foreign', 'clerk-broken'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', calculateClerkNetWeight);
+  });
 }
 
 // -----------------------------------------------------------------------------

@@ -689,8 +689,7 @@
 
             <!-- Weighbridge & Tolerance Section -->
             <div class="glass-card">
-              <h4 style="font-size: 1rem; color: #ffffff; margin-bottom: 0.75rem;">2. Official Weighbridge Recording
-              </h4>
+              <h4 style="font-size: 1rem; color: #ffffff; margin-bottom: 0.75rem;">2. Official Weighbridge Recording</h4>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
                 <div>
@@ -710,8 +709,7 @@
                 style="background: rgba(15, 23, 42, 0.8); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
                 <div style="display: flex; justify-content: space-between;">
                   <span style="font-size: 0.8rem; color: var(--text-muted);">Actual Net Weight:</span>
-                  <span style="font-size: 1.1rem; font-weight: 800; color: #34d399;" id="clerk-net-weight-text">32.0
-                    Q</span>
+                  <span style="font-size: 1.1rem; font-weight: 800; color: #34d399;" id="clerk-net-weight-text">32.0 Q</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 0.25rem;">
                   <span style="color: var(--text-muted);">Allocated Estimate:</span>
@@ -732,14 +730,43 @@
             </div>
           </div>
 
+          <!-- 3. LIVE PRICE & DBT DISBURSEMENT SUMMARY -->
+          <div class="glass-card" style="margin-bottom: 1.5rem; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(16, 185, 129, 0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+              <h4 style="font-size: 1.05rem; color: #ffffff; display: flex; align-items: center; gap: 0.4rem; margin: 0;">
+                💰 3. Government MSP Valuation & DBT Payout Breakdown
+              </h4>
+              <span class="badge badge-safe" id="clerk-msp-rate-badge">MSP: ₹2,275 / Q</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 0.75rem;">
+              <div style="background: rgba(30, 41, 59, 0.6); padding: 0.75rem; border-radius: var(--radius-sm);">
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Gross MSP Crop Value</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: #ffffff;" id="clerk-calc-gross">₹72,800.00</div>
+              </div>
+
+              <div style="background: rgba(30, 41, 59, 0.6); padding: 0.75rem; border-radius: var(--radius-sm);">
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Quality Refraction Deductions</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: #fca5a5;" id="clerk-calc-deductions">-₹0.00</div>
+                <div style="font-size: 0.68rem; color: var(--text-muted);" id="clerk-deduction-reason">Grade A: 0% deduction</div>
+              </div>
+
+              <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1)); border: 1px solid rgba(16, 185, 129, 0.4); padding: 0.75rem; border-radius: var(--radius-sm);">
+                <div style="font-size: 0.72rem; color: #a7f3d0; font-weight: 700;">Net Direct Benefit Transfer (DBT)</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #34d399;" id="clerk-calc-net">₹72,800.00</div>
+                <div style="font-size: 0.68rem; color: #cbd5e1;">Direct to Aadhaar-linked Bank A/C</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Primary Atomic Fulfillment Action -->
-          <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+          <div style="display: flex; justify-content: flex-end; gap: 1rem; align-items: center; flex-wrap: wrap;">
             <button class="btn btn-danger" id="btn-clerk-reject" onclick="triggerClerkReject()">
               ❌ Reject Delivery
             </button>
             <button class="btn btn-primary" id="btn-clerk-accept-fulfill"
-              style="padding: 0.85rem 2rem; font-size: 1.05rem;" onclick="executeClerkAcceptFulfill()">
-              ✅ Accept Crop & Fulfill Delivery (Atomic)
+              style="padding: 0.85rem 2rem; font-size: 1.05rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="executeClerkAcceptFulfill()">
+              🚀 Confirm Weighment & Instant DBT Disburse (<span id="clerk-btn-amount">₹72,800.00</span>)
             </button>
           </div>
         </div>
