@@ -475,47 +475,75 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- 3. MANDI CLERK & QUALITY INSPECTOR PORTAL -->
+    <!-- 3. PACS CLERK & QUALITY INSPECTOR PORTAL -->
     <!-- ========================================================================= -->
     <section id="view-clerk" class="view-section" style="display: none;">
       <div class="glass-panel" style="padding: 2rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
           <div>
-            <h2 style="font-size: 1.5rem; color: #ffffff;">Mandi Clerk: AI Inspection & Weighbridge Desk</h2>
+            <h2 style="font-size: 1.5rem; color: #ffffff;">PACS Clerk: AI Inspection & Weighbridge Desk</h2>
             <p style="font-size: 0.875rem; color: var(--text-muted);">
-              Inspect grain samples, enter official weighbridge gross/tare weights, and execute atomic fulfillment.
+              Live digital token pipeline — see upcoming farmer arrivals, yard queue, AI quality grading, and atomic fulfillment in real time.
             </p>
           </div>
-          <div style="display: flex; gap: 0.75rem; align-items: center;">
-            <select id="clerk-center-select" class="form-select" style="width: 240px;">
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <select id="clerk-center-select" class="form-select" style="width: 230px;">
               <option value="1">Rampur PACS Center</option>
               <option value="2">Bilaspur PACS Center</option>
               <option value="3">Sitapur PACS Godown</option>
               <option value="4">Kalyanpur Buffer Depot</option>
             </select>
-            <button class="btn btn-secondary btn-sm" id="btn-refresh-clerk-queue">🔄 Refresh Queue</button>
+            <button class="btn btn-secondary btn-sm" id="btn-refresh-clerk-queue">🔄 Refresh Pipeline</button>
           </div>
         </div>
 
-        <!-- Live Checked-In Queue Table -->
+        <!-- Live Digital Token Tracker & Pipeline Filter Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; background: rgba(11, 17, 30, 0.6); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-steel);">
+          <div class="subtab-scroll-container" style="margin-bottom: 0; gap: 0.4rem;" id="clerk-status-filters">
+            <button class="btn btn-sm btn-primary clerk-filter-btn" data-status="ALL">
+              📊 All Pipeline (<span id="count-all">0</span>)
+            </button>
+            <button class="btn btn-sm btn-secondary clerk-filter-btn" data-status="CONFIRMED">
+              📅 Upcoming Scheduled (<span id="count-confirmed">0</span>)
+            </button>
+            <button class="btn btn-sm btn-secondary clerk-filter-btn" data-status="CHECKED_IN">
+              🛡️ Yard Checked-In (<span id="count-checkedin">0</span>)
+            </button>
+            <button class="btn btn-sm btn-secondary clerk-filter-btn" data-status="QUALITY_APPROVED">
+              🔬 Quality Approved (<span id="count-quality">0</span>)
+            </button>
+            <button class="btn btn-sm btn-secondary clerk-filter-btn" data-status="PAYMENT_DISPATCHED">
+              🧾 DBT Dispatched (<span id="count-dispatched">0</span>)
+            </button>
+          </div>
+
+          <!-- Quick Search -->
+          <div style="min-width: 220px; flex-grow: 1; max-width: 320px;">
+            <input type="text" id="clerk-search-input" class="form-input" placeholder="🔍 Search Token / Farmer / Phone..." style="padding: 0.4rem 0.75rem; font-size: 0.85rem; min-height: 38px;">
+          </div>
+        </div>
+
+        <!-- Live Token Pipeline & Inspection Queue Table -->
         <div style="margin-bottom: 2rem;">
-          <h4 style="font-size: 1.1rem; color: #ffffff; margin-bottom: 1rem;">Checked-In Farmer Queue (Ready for Inspection & Weighment)</h4>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="font-size: 1.05rem; color: #ffffff;">📋 Live PACS Digital Token Tracker</h4>
+            <span style="font-size: 0.75rem; color: var(--text-muted);" id="clerk-queue-caption">Showing real-time scheduled and in-yard arrivals</span>
+          </div>
           <div class="table-responsive">
             <table class="industrial-table">
               <thead>
                 <tr>
                   <th>Token</th>
-                  <th>Farmer Name</th>
-                  <th>Crop</th>
-                  <th>Allocated Q</th>
-                  <th>Arrival Slot</th>
-                  <th>Tractor No</th>
-                  <th>Status</th>
+                  <th>Farmer & Phone</th>
+                  <th>Crop & Qty</th>
+                  <th>Scheduled Date & Window</th>
+                  <th>Vehicle No</th>
+                  <th>Live Stage / Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody id="clerk-queue-table-body">
-                <!-- Dynamically populated checked-in rows -->
+                <!-- Dynamically populated rows -->
               </tbody>
             </table>
           </div>
@@ -523,12 +551,41 @@
 
         <!-- Processing / Fulfillment Modal Area -->
         <div id="clerk-inspection-panel" class="glass-panel" style="padding: 1.75rem; display: none; border-color: var(--primary);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <div>
               <span class="badge badge-info" id="clerk-active-token">TK-78402</span>
               <h3 style="font-size: 1.35rem; color: #ffffff; margin-top: 0.35rem;" id="clerk-farmer-name">Vikram Patel - Chana (32.0 Q)</h3>
             </div>
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('clerk-inspection-panel').style.display='none'">✕ Close</button>
+          </div>
+
+          <!-- Live Digital Token 5-Stage Stepper for Clerk -->
+          <div style="background: rgba(11, 17, 30, 0.7); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-steel); margin-bottom: 1.5rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem;">
+              📡 Live Digital Token Stage Tracker:
+            </div>
+            <div class="stepper-container" id="clerk-token-stepper" style="margin: 0.5rem 0;">
+              <div class="stepper-step completed" id="clerk-step-1">
+                <div class="step-node">1</div>
+                <div class="step-label">Slot Confirmed</div>
+              </div>
+              <div class="stepper-step" id="clerk-step-2">
+                <div class="step-node">2</div>
+                <div class="step-label">Yard Arrival</div>
+              </div>
+              <div class="stepper-step" id="clerk-step-3">
+                <div class="step-node">3</div>
+                <div class="step-label">AI Quality Tested</div>
+              </div>
+              <div class="stepper-step" id="clerk-step-4">
+                <div class="step-node">4</div>
+                <div class="step-label">Weighbridge Gross/Tare</div>
+              </div>
+              <div class="stepper-step" id="clerk-step-5">
+                <div class="step-node">5</div>
+                <div class="step-label">DBT Dispatched</div>
+              </div>
+            </div>
           </div>
 
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">

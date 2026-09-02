@@ -115,7 +115,7 @@ def check_in_farmer(req: CheckInRequest):
         "status": "success",
         "new_status": "CHECKED_IN",
         "token_code": slot["token_code"],
-        "message": f"Farmer check-in recorded successfully. Token {slot['token_code']} moved to Mandi Queue."
+        "message": f"Farmer check-in recorded successfully. Token {slot['token_code']} moved to PACS Queue."
     }
 
 @router.get("/offline-manifest/{center_id}")

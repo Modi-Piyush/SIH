@@ -42,7 +42,7 @@ const i18n = {
     app_subtitle: 'Smart Storage-Aware Procurement & AI Quality Supply Chain Platform',
     nav_farmer: 'Farmer Portal',
     nav_guard: 'Gatekeeper (Offline)',
-    nav_clerk: 'Mandi Quality & Weigh',
+    nav_clerk: 'PACS Quality & Weigh',
     nav_admin: 'Admin Command',
     nav_voice: 'Hindi Voice IVR',
     farmer_tab_book: 'Smart Slot Booking',
@@ -74,7 +74,7 @@ const i18n = {
     app_subtitle: 'स्मार्ट गोदाम क्षमता आधारित ई-खरीद, एआई गुणवत्ता व ऑफलाइन सप्लाई चेन प्लेटफॉर्म',
     nav_farmer: 'किसान पोर्टल',
     nav_guard: 'गेटकीपर (ऑफलाइन)',
-    nav_clerk: 'मंडी गुणवत्ता व धर्मकांटा',
+    nav_clerk: 'पैक्स गुणवत्ता व धर्मकांटा',
     nav_admin: 'जिला नियंत्रण कक्ष',
     nav_voice: 'हिंदी वॉइस आईवीआर',
     farmer_tab_book: 'स्मार्ट स्लॉट बुकिंग',
@@ -1007,47 +1007,164 @@ function setupGuardEvents() {
 }
 
 // -----------------------------------------------------------------------------
-// 5. MANDI CLERK & QUALITY INSPECTOR LOGIC
 // -----------------------------------------------------------------------------
+// 5. PACS CLERK & LIVE DIGITAL TOKEN TRACKER LOGIC
+// -----------------------------------------------------------------------------
+state.clerkFilterStatus = 'ALL';
+state.clerkRawQueue = [];
+
 async function loadClerkQueue() {
   const centerId = document.getElementById('clerk-center-select').value;
   try {
     const res = await fetch(`/api/clerk/queue/${centerId}`);
     const queue = await res.json();
+    state.clerkRawQueue = queue;
+    updateClerkFilterCounts(queue);
     renderClerkQueue(queue);
   } catch (err) {
     console.error('Clerk queue error:', err);
   }
 }
 
+function updateClerkFilterCounts(queue) {
+  const countAll = queue.length;
+  const countConfirmed = queue.filter(q => q.status === 'CONFIRMED').length;
+  const countCheckedIn = queue.filter(q => q.status === 'CHECKED_IN').length;
+  const countQuality = queue.filter(q => q.status === 'QUALITY_APPROVED' || q.status === 'WEIGHMENT_COMPLETE').length;
+  const countDispatched = queue.filter(q => q.status === 'PAYMENT_DISPATCHED').length;
+
+  const elAll = document.getElementById('count-all');
+  if (elAll) elAll.innerText = countAll;
+  const elConf = document.getElementById('count-confirmed');
+  if (elConf) elConf.innerText = countConfirmed;
+  const elCheck = document.getElementById('count-checkedin');
+  if (elCheck) elCheck.innerText = countCheckedIn;
+  const elQual = document.getElementById('count-quality');
+  if (elQual) elQual.innerText = countQuality;
+  const elDisp = document.getElementById('count-dispatched');
+  if (elDisp) elDisp.innerText = countDispatched;
+}
+
 function renderClerkQueue(queue) {
   const tbody = document.getElementById('clerk-queue-table-body');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
-  if (!queue.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="padding: 1.5rem; text-align: center; color: var(--text-dim);">No checked-in farmers waiting in queue for this center.</td></tr>`;
+  const filterStatus = state.clerkFilterStatus || 'ALL';
+  const searchTerm = (document.getElementById('clerk-search-input')?.value || '').toLowerCase().trim();
+
+  let filtered = queue;
+  if (filterStatus !== 'ALL') {
+    if (filterStatus === 'QUALITY_APPROVED') {
+      filtered = filtered.filter(q => q.status === 'QUALITY_APPROVED' || q.status === 'WEIGHMENT_COMPLETE');
+    } else {
+      filtered = filtered.filter(q => q.status === filterStatus);
+    }
+  }
+
+  if (searchTerm) {
+    filtered = filtered.filter(q => 
+      (q.token_code && q.token_code.toLowerCase().includes(searchTerm)) ||
+      (q.farmer_name && q.farmer_name.toLowerCase().includes(searchTerm)) ||
+      (q.farmer_phone && q.farmer_phone.includes(searchTerm)) ||
+      (q.tractor_number && q.tractor_number.toLowerCase().includes(searchTerm)) ||
+      (q.crop_name && q.crop_name.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding: 1.5rem; text-align: center; color: var(--text-dim);">No token records matching current filter in this PACS center.</td></tr>`;
     return;
   }
 
-  queue.forEach((s) => {
+  filtered.forEach((s) => {
+    let badgeClass = 'badge-info';
+    let statusLabel = s.status;
+    let actionBtn = '';
+
+    if (s.status === 'CONFIRMED') {
+      badgeClass = 'badge-info';
+      statusLabel = '📅 Confirmed (Upcoming)';
+      actionBtn = `<button class="btn btn-primary btn-sm" onclick='openClerkInspectionModal(${JSON.stringify(s)})'>🔍 Inspect & Weigh</button>`;
+    } else if (s.status === 'CHECKED_IN') {
+      badgeClass = 'badge-warning';
+      statusLabel = '🛡️ Yard Checked-In';
+      actionBtn = `<button class="btn btn-primary btn-sm" onclick='openClerkInspectionModal(${JSON.stringify(s)})'>🔍 Inspect & Weigh</button>`;
+    } else if (s.status === 'QUALITY_APPROVED') {
+      badgeClass = 'badge-safe';
+      statusLabel = '🔬 Quality Approved';
+      actionBtn = `<button class="btn btn-primary btn-sm" onclick='openClerkInspectionModal(${JSON.stringify(s)})'>⚖️ Official Weigh</button>`;
+    } else if (s.status === 'WEIGHMENT_COMPLETE') {
+      badgeClass = 'badge-safe';
+      statusLabel = '⚖️ Weighed';
+      actionBtn = `<button class="btn btn-primary btn-sm" onclick='openClerkInspectionModal(${JSON.stringify(s)})'>✅ Finalize</button>`;
+    } else if (s.status === 'PAYMENT_DISPATCHED') {
+      badgeClass = 'badge-safe';
+      statusLabel = '🧾 DBT Dispatched';
+      actionBtn = `<button class="btn btn-secondary btn-sm" onclick="trackFarmerToken('${s.token_code}')">🎫 View Token</button>`;
+    } else if (s.status === 'REJECTED') {
+      badgeClass = 'badge-critical';
+      statusLabel = '❌ Rejected';
+      actionBtn = `<span style="font-size:0.75rem; color:#f87171;">Closed</span>`;
+    }
+
     const row = document.createElement('tr');
-    row.style.borderBottom = '1px solid var(--border)';
     row.innerHTML = `
-      <td style="padding: 0.75rem; font-weight: 700; color: #ffffff;">${s.token_code}</td>
-      <td style="padding: 0.75rem;">${s.farmer_name}</td>
-      <td style="padding: 0.75rem;"><span class="badge badge-info">${s.crop_name}</span></td>
-      <td style="padding: 0.75rem; font-weight: 600;">${s.allocated_weight_q} Q</td>
-      <td style="padding: 0.75rem; color: var(--text-muted);">${s.arrival_window_start} - ${s.arrival_window_end}</td>
-      <td style="padding: 0.75rem;">${s.tractor_number || 'UP-65-XX'}</td>
-      <td style="padding: 0.75rem;"><span class="badge badge-warning">${s.status}</span></td>
+      <td style="padding: 0.75rem; font-weight: 700; color: #ffffff; font-family: var(--font-mono);">${s.token_code}</td>
       <td style="padding: 0.75rem;">
-        <button class="btn btn-primary btn-sm" onclick='openClerkInspectionModal(${JSON.stringify(s)})'>
-          🔍 Inspect & Weigh
-        </button>
+        <strong style="color: #ffffff;">${s.farmer_name}</strong><br>
+        <span style="font-size: 0.72rem; color: var(--text-muted);">📞 ${s.farmer_phone || '9876543210'} • ${s.farmer_village || 'Varanasi'}</span>
       </td>
+      <td style="padding: 0.75rem;">
+        <span class="badge badge-info">${s.crop_name}</span>
+        <strong style="margin-left: 0.25rem; font-family: var(--font-mono);">${s.allocated_weight_q} Q</strong>
+      </td>
+      <td style="padding: 0.75rem; color: var(--text-muted); font-size: 0.8rem;">
+        📅 ${s.scheduled_date || 'Today'}<br>
+        <span style="color: #60a5fa; font-weight: 600;">⏰ ${s.arrival_window_start} - ${s.arrival_window_end}</span>
+      </td>
+      <td style="padding: 0.75rem; font-family: var(--font-mono); font-size: 0.8rem;">${s.tractor_number || 'UP-65-AB-1234'}</td>
+      <td style="padding: 0.75rem;"><span class="badge ${badgeClass}">${statusLabel}</span></td>
+      <td style="padding: 0.75rem;">${actionBtn}</td>
     `;
     tbody.appendChild(row);
   });
+}
+
+function updateClerkModalStepper(status) {
+  const steps = ['clerk-step-1', 'clerk-step-2', 'clerk-step-3', 'clerk-step-4', 'clerk-step-5'];
+  steps.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'stepper-step';
+  });
+
+  const s1 = document.getElementById('clerk-step-1');
+  const s2 = document.getElementById('clerk-step-2');
+  const s3 = document.getElementById('clerk-step-3');
+  const s4 = document.getElementById('clerk-step-4');
+  const s5 = document.getElementById('clerk-step-5');
+
+  if (status === 'CONFIRMED') {
+    if (s1) s1.className = 'stepper-step active';
+  } else if (status === 'CHECKED_IN') {
+    if (s1) s1.className = 'stepper-step completed';
+    if (s2) s2.className = 'stepper-step active';
+  } else if (status === 'QUALITY_APPROVED') {
+    if (s1) s1.className = 'stepper-step completed';
+    if (s2) s2.className = 'stepper-step completed';
+    if (s3) s3.className = 'stepper-step active';
+  } else if (status === 'WEIGHMENT_COMPLETE') {
+    if (s1) s1.className = 'stepper-step completed';
+    if (s2) s2.className = 'stepper-step completed';
+    if (s3) s3.className = 'stepper-step completed';
+    if (s4) s4.className = 'stepper-step active';
+  } else if (status === 'PAYMENT_DISPATCHED') {
+    if (s1) s1.className = 'stepper-step completed';
+    if (s2) s2.className = 'stepper-step completed';
+    if (s3) s3.className = 'stepper-step completed';
+    if (s4) s4.className = 'stepper-step completed';
+    if (s5) s5.className = 'stepper-step completed';
+  }
 }
 
 function openClerkInspectionModal(slot) {
@@ -1058,6 +1175,9 @@ function openClerkInspectionModal(slot) {
   document.getElementById('clerk-active-token').innerText = slot.token_code;
   document.getElementById('clerk-farmer-name').innerText = `${slot.farmer_name} - ${slot.crop_name} (${slot.allocated_weight_q} Q)`;
   
+  // Update Live Modal Stepper
+  updateClerkModalStepper(slot.status);
+
   // Set default gross & tare
   const alloc = slot.allocated_weight_q || 32.0;
   document.getElementById('clerk-gross-weight').value = alloc + 20.0;
@@ -1162,7 +1282,7 @@ async function triggerClerkReject() {
       body: JSON.stringify({
         token_code: slot.token_code,
         rejection_reason: reason,
-        recommendation: 'Sun dry grain for 2-3 days before returning to mandi.'
+        recommendation: 'Sun dry grain for 2-3 days before returning to PACS Center.'
       })
     });
 
@@ -1179,6 +1299,30 @@ async function triggerClerkReject() {
 function setupClerkEvents() {
   document.getElementById('clerk-center-select').addEventListener('change', loadClerkQueue);
   document.getElementById('btn-refresh-clerk-queue').addEventListener('click', loadClerkQueue);
+
+  // Filter Buttons
+  document.querySelectorAll('.clerk-filter-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.clerk-filter-btn').forEach(b => {
+        b.classList.remove('btn-primary');
+        b.classList.add('btn-secondary');
+      });
+      const targetBtn = e.currentTarget;
+      targetBtn.classList.remove('btn-secondary');
+      targetBtn.classList.add('btn-primary');
+
+      state.clerkFilterStatus = targetBtn.getAttribute('data-status');
+      renderClerkQueue(state.clerkRawQueue || []);
+    });
+  });
+
+  // Real-time Search Input
+  const searchInput = document.getElementById('clerk-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      renderClerkQueue(state.clerkRawQueue || []);
+    });
+  }
 
   document.getElementById('clerk-override-toggle').addEventListener('change', (e) => {
     document.getElementById('clerk-override-box').style.display = e.target.checked ? 'block' : 'none';

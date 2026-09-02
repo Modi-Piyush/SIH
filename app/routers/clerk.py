@@ -1,5 +1,5 @@
 """
-Mandi Clerk / Quality Inspector Router: Live Checked-in Queue, AI Quality Assessment,
+PACS Clerk / Quality Inspector Router: Live Queue & Scheduled Pipeline, AI Quality Assessment,
 Manual Grade Override, Official Weighbridge Recording, Atomic Acceptance & Fulfillment, and Rejections.
 """
 
@@ -7,7 +7,7 @@ import json
 import random
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
 from pydantic import BaseModel, Field
 
 from app.database import get_db_connection
@@ -40,18 +40,40 @@ class RejectCropRequest(BaseModel):
     inspector_notes: Optional[str] = None
 
 @router.get("/queue/{center_id}")
-def get_checked_in_queue(center_id: int):
-    """Retrieves live queue of checked-in farmers waiting for quality inspection and weighment."""
+def get_checked_in_queue(center_id: int, filter_status: Optional[str] = Query(None)):
+    """
+    Retrieves full real-time PACS token pipeline:
+    - Scheduled & Confirmed upcoming arrivals (who is coming and when)
+    - Gate Checked-In farmers
+    - Quality Approved & Weighbridge Complete
+    - Dispatched receipts
+    """
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-    SELECT s.*, u.name as farmer_name, u.phone as farmer_phone, u.village as farmer_village, u.farmer_category
-    FROM slots s
-    JOIN users u ON s.farmer_id = u.id
-    WHERE s.center_id = ? AND s.status IN ('CHECKED_IN', 'QUALITY_APPROVED', 'WEIGHMENT_COMPLETE')
-    ORDER BY s.id ASC
-    """, (center_id,))
+    if filter_status and filter_status.upper() != "ALL":
+        cursor.execute("""
+        SELECT s.*, u.name as farmer_name, u.phone as farmer_phone, u.village as farmer_village, u.farmer_category
+        FROM slots s
+        JOIN users u ON s.farmer_id = u.id
+        WHERE s.center_id = ? AND s.status = ?
+        ORDER BY s.scheduled_date ASC, s.arrival_window_start ASC, s.id ASC
+        """, (center_id, filter_status.upper()))
+    else:
+        cursor.execute("""
+        SELECT s.*, u.name as farmer_name, u.phone as farmer_phone, u.village as farmer_village, u.farmer_category
+        FROM slots s
+        JOIN users u ON s.farmer_id = u.id
+        WHERE s.center_id = ? AND s.status IN ('CONFIRMED', 'CHECKED_IN', 'QUALITY_APPROVED', 'WEIGHMENT_COMPLETE', 'PAYMENT_DISPATCHED', 'REJECTED')
+        ORDER BY CASE s.status
+            WHEN 'CHECKED_IN' THEN 1
+            WHEN 'QUALITY_APPROVED' THEN 2
+            WHEN 'CONFIRMED' THEN 3
+            WHEN 'WEIGHMENT_COMPLETE' THEN 4
+            WHEN 'PAYMENT_DISPATCHED' THEN 5
+            ELSE 6
+        END, s.scheduled_date ASC, s.arrival_window_start ASC, s.id ASC
+        """, (center_id,))
     rows = cursor.fetchall()
     conn.close()
 
